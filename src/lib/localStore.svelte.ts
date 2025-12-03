@@ -1,29 +1,54 @@
 import { browser } from '$app/environment';
+import { writable, type Writable } from 'svelte/store';
 
 export class LocalStore<T> {
-    value = $state<T>() as T;
+    value: Writable<T>;
     key = '';
 
-    constructor(key: string, value: T) {
+    constructor(key: string, initialValue: T) {
         this.key = key;
-        this.value = value;
+        this.value = writable(initialValue);
 
         if (browser) {
             const item = localStorage.getItem(key);
-            if (item) this.value = this.deserialize(item);
-        }
+            if (item) {
+                try {
+                    this.value.set(this.deserialize(item));
+                } catch (e) {
+                    console.error('Failed to deserialize:', e);
+                    this.value.set(initialValue);
+                }
+            }
 
-        $effect(() => {
-            localStorage.setItem(this.key, this.serialize(this.value));
-        });
+            // Subscribe to store changes and persist to localStorage
+            this.value.subscribe((currentValue) => {
+                try {
+                    localStorage.setItem(this.key, this.serialize(currentValue));
+                } catch (e) {
+                    console.error('Failed to serialize:', e);
+                }
+            });
+        }
     }
 
     serialize(value: T): string {
+        if (value instanceof Map) {
+            return JSON.stringify({
+                __type: 'Map',
+                data: Array.from(value.entries())
+            });
+        }
         return JSON.stringify(value);
     }
 
     deserialize(item: string): T {
-        return JSON.parse(item);
+        const parsed = JSON.parse(item);
+
+        if (parsed.__type === 'Map' && Array.isArray(parsed.data)) {
+            return new Map(parsed.data) as T;
+        }
+
+        return parsed;
     }
 }
 

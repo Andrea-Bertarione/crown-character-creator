@@ -26,6 +26,7 @@
 		"vite": "^7.2.2"
 	},
 	"dependencies": {
+		"superjson": "^2.2.6",
 		"uuid": "^13.0.0"
 	}
 }

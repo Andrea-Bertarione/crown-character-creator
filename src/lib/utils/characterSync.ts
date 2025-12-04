@@ -1,4 +1,4 @@
-import type { Character, Race } from "../../State/characters.state";
+import type {Character, FeatureChoiceType, Race} from "../../State/characters.state";
 import featureList from "../../data/features.data";
 
 export function syncToCharacter(
@@ -7,8 +7,8 @@ export function syncToCharacter(
     chosenLanguagesState: string[],
     chosenAbilityModifiersState: string[],
     traitsOpen: { open: boolean; type?: string; choices: string[] }[]
-): void {
-    characterInstance.choosenLanguages = [
+): Character {
+    characterInstance.chosenLanguages = [
         ...chosenLanguagesState.filter(l => l)
     ];
 
@@ -16,33 +16,15 @@ export function syncToCharacter(
         ...chosenAbilityModifiersState.filter(a => a)
     ];
 
-    characterInstance.proficencies = [];
-
-    const featureChoices: Record<string, { type: string; value: string[] }> = {};
+    const featureChoices: Record<string, { type: FeatureChoiceType; value: string[] }> = {};
     race.features.forEach((feature, i) => {
-        if (featureList[feature]?.choice && traitsOpen[i].choices.length > 0) {
+        if (featureList[feature]?.choice && traitsOpen[i] && traitsOpen[i].choices.length > 0) {
             const chosenItems = traitsOpen[i].choices.filter(c => c);
 
             featureChoices[feature] = {
-                type: featureList[feature].choice.type,
+                type: featureList[feature].choice.type as FeatureChoiceType,
                 value: chosenItems
             };
-
-            if (featureList[feature].choice.type === "skill") {
-                chosenItems.forEach(item => {
-                    if (!characterInstance.proficencies.includes(item)) {
-                        characterInstance.proficencies.push(item);
-                    }
-                });
-            }
-
-            if (featureList[feature].choice.type === "expertise") {
-                chosenItems.forEach(item => {
-                    if (!characterInstance.expertises.includes(item)) {
-                        characterInstance.expertises.push(item);
-                    }
-                });
-            }
         }
     });
     characterInstance.featureChoices = featureChoices;
@@ -50,4 +32,6 @@ export function syncToCharacter(
     race.features.forEach((feature) => {
         featureList[feature].action(characterInstance);
     });
+
+    return characterInstance;
 }

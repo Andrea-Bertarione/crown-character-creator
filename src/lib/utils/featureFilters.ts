@@ -6,27 +6,22 @@ export function getAvailableItems(
     type: string,
     availableList: readonly string[],
     characterInstance: Character,
-    traitsOpenChoices: string[],
-    currentChoiceIndex?: number
 ): SelectItem[] {
     const filtered = availableList.filter(item => {
         switch (type) {
             case "skill":
-                return !characterInstance.proficencies.includes(item);
+                return !characterInstance.proficiencies.skills.includes(item);
             case "expertise":
-                const chosenInOtherDropdowns = traitsOpenChoices.filter(
-                    (_, idx) => idx !== currentChoiceIndex
-                );
                 return (
-                    characterInstance.proficencies.includes(item) //&&
+                    characterInstance.proficiencies.skills.includes(item) || characterInstance.proficiencies.tools.includes(item)//&&
                     //!chosenInOtherDropdowns.includes(item)
                 );
             case "saving throw":
-                return !characterInstance.saveProficencies?.includes(item);
+                return !characterInstance.proficiencies.saves.includes(item);
             case "weapon":
             case "armor":
             case "tool":
-                return !characterInstance.proficencies.includes(item);
+                return !characterInstance.proficiencies.tools.includes(item);
             default:
                 return true;
         }

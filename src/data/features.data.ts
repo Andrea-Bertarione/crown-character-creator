@@ -20,8 +20,11 @@ export const featureList: {
     "Keen Senses": {
         description: "Proficiency in the Perception skill.",
         action: (character: Character) => {
-            if (!character.proficencies.includes("Perception")) {
-                character.proficencies.push("Perception");
+            if (!character.proficiencies.skills.includes("Perception")) {
+                character.proficiencies.skills.push("Perception");
+            }
+            else {
+                console.warn("Couldn't add 'Perception Proficiency' to character's skills. ")
             }
         }
     },
@@ -97,7 +100,7 @@ export const featureList: {
         description: "Gain proficiency in two skills of your choice.",
         choice: {
             type: "skill",
-            availableList: skillList,
+            availableList: skillList.map(v => v),
             amount: 2
         },
         action: () => {}
@@ -106,8 +109,8 @@ export const featureList: {
     "Menacing": {
         description: "Proficiency in Intimidation skill.",
         action: (character: Character) => {
-            if (!character.proficencies.includes("Intimidation")) {
-                character.proficencies.push("Intimidation");
+            if (!character.proficiencies.skills.includes("Intimidation")) {
+                character.proficiencies.skills.push("Intimidation");
             }
         }
     },

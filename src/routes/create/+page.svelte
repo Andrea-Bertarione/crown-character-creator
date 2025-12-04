@@ -12,6 +12,7 @@
         Race
     } from "../../State/characters.state";
     import { raceList } from "../../data/races.data";
+    import {syncToCharacter} from "$lib/utils/characterSync";
 
     let showCreationModal = $state(false);
 
@@ -21,7 +22,12 @@
         raceName: "Default" as string,
     });
 
-    // 2) Map RaceData -> Race instances for runtime use
+    // 2) RaceCard selection state (persists across race changes)
+    let chosenLanguagesState = $state<string[]>([]);
+    let chosenAbilityModifiersState = $state<string[]>([]);
+    let traitsOpen = $state<{ open: boolean; type?: string; choices: string[] }[]>([]);
+
+    // 3) Map RaceData -> Race instances for runtime use
     const raceMap = new Map<string, Race>(
         raceList.map(raceData => [
             raceData.name,
@@ -39,54 +45,74 @@
         ])
     );
 
-    // 3) Items for Flowbite Select
+    // 4) Items for Flowbite Select
     const itemRaceList = raceList.map(raceData => ({
         value: raceData.name,
         name: raceData.name
     }));
 
-    // 4) Computed: current selected race (updates when characterForm.raceName changes)
+    // 5) Computed: current selected race (updates when characterForm.raceName changes)
     let currentRace = $derived(raceMap.get(characterForm.raceName) ?? null);
 
-    // 5) Computed: derived Character instance
+    // 6) Computed: derived Character instance (now includes RaceCard state)
     let newCharacter = $derived.by(() => {
         const c = new Character();
         c.name = characterForm.name;
         if (currentRace) {
             c.race = currentRace;
             c.allLanguages = currentRace.languages;
-            c.choosenLanguages = [];
+            c.chosenLanguages = chosenLanguagesState;
+            c.chosenAbilityModifiers = chosenAbilityModifiersState;
         }
         return c;
     });
 
+    let actualMap = new Map<string, Character>();
     let characters: Character[] = $derived.by(() => {
         let chars: Character[] = [];
         charactersState.value.subscribe(map => {
             chars = Array.from(map.values());
+            actualMap = map;
         });
         return chars;
     });
 
     let characterAmount = $derived(characters.length);
 
-    // 6) Handler for submit
+    // 7) Handler for submit
     function handleCreate() {
-        newCharacter.allLanguages = newCharacter.allLanguages.concat(newCharacter.choosenLanguages as CharacterLanguage[]);
+        if (!currentRace) return;
+
+        // Combine race languages with chosen languages
+        newCharacter.allLanguages = currentRace.languages.concat(chosenLanguagesState as CharacterLanguage[]);
+
+        // Apply ability modifiers
         for (const attribute in newCharacter.stats) {
+            const choiceIndex = chosenAbilityModifiersState?.indexOf(attribute);
 
-            const choiceIndex = newCharacter.chosenAbilityModifiers?.indexOf(attribute);
+            // Add fixed modifiers from race
+            newCharacter.stats[attribute as AbilityScore] += currentRace.fixedModifiers[attribute as AbilityScore];
 
-            newCharacter.stats[attribute as AbilityScore] += newCharacter.race.fixedModifiers[attribute as AbilityScore];
-            newCharacter.stats[attribute as AbilityScore] +=  choiceIndex ? newCharacter.race.choiceModifiers[choiceIndex] : 0;
+            // Add choice modifiers if this ability was chosen
+            if (choiceIndex !== -1) {
+                newCharacter.stats[attribute as AbilityScore] += currentRace.choiceModifiers[choiceIndex];
+            }
         }
-
 
         console.log("Creating character:", newCharacter);
         // Push to store or API here
+        actualMap.set(newCharacter.id, newCharacter)
+        charactersState.value.set(actualMap);
+
+        // Reset form
         showCreationModal = false;
         characterForm = { name: "", raceName: "Default" };
+        chosenLanguagesState = [];
+        chosenAbilityModifiersState = [];
+        traitsOpen = [];
     }
+
+
 </script>
 
 <Header />
@@ -94,8 +120,8 @@
     <h2 class="text-5xl font-bold dark:text-white">Your Characters</h2>
     {#if characterAmount > 0}
         <GradientButton
-            class="absolute top-16 right-20"
-            onclick={() => showCreationModal = true}
+                class="absolute top-16 right-20"
+                onclick={() => showCreationModal = true}
         >
             Create New Character
         </GradientButton>
@@ -143,7 +169,13 @@
         />
 
         {#if currentRace}
-            <RaceCard race={currentRace} characterInstance={newCharacter} />
+            <RaceCard
+                    race={currentRace}
+                    characterInstance={newCharacter}
+                    bind:chosenLanguagesState
+                    bind:chosenAbilityModifiersState
+                    bind:traitsOpen
+            />
         {/if}
 
         <GradientButton type="submit">Create</GradientButton>

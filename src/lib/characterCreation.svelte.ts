@@ -13,6 +13,11 @@ export interface Character {
     race: CharacterRace;
     abilityScoreComputed: Record<AbilityScore, number>;
     abilityScores: Record<AbilityScore, number>;
+    additionalAbilityScores: Record<string, {
+        source: string;
+        increment: number;
+        chosenScore: AbilityScore | null;
+    }>;
     proficiencies: CharacterProficiencies;
     features: [];
 }
@@ -37,6 +42,7 @@ const starterCharacter: Character = {
         intelligence: 10,
         charisma: 10,
     },
+    additionalAbilityScores: {},
     proficiencies: proficienciesList,
     features: [],
 };

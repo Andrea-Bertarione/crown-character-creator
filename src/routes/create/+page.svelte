@@ -3,6 +3,7 @@
     import Header from "../../components/header/header.svelte";
     import AbilityScoreComp from "../../components/abilityScoreComp/abilityScoreComp.svelte";
     import {type AbilityScore, type Character} from "$lib/characterCreation.svelte";
+    import {type CharacterRace, racesData} from "../../data/races.data";
     import {proficienciesList} from "../../data/proficiencies.data";
     import { raceList, type RaceData } from "../../data/races.data";
 
@@ -32,9 +33,46 @@
             intelligence: 10,
             charisma: 10,
         } as Record<AbilityScore, number>,
+        additionalAbilityScores: {},
         proficiencies: proficienciesList,
         features: [],
+    });
 
+    let previousRace = $state<CharacterRace | "Default">("Default");
+
+    $effect(() => {
+        if (characterState.race !== "Default") {
+            const selectedRace = racesData[characterState.race as CharacterRace];
+
+            // Remove modifiers from PREVIOUS race
+            if (previousRace !== "Default") {
+                const prevRaceData = racesData[previousRace];
+                prevRaceData.choiceModifiers.forEach((_, index) => {
+                    delete characterState.additionalAbilityScores[`Race-${prevRaceData.name} extra ability score n.${index}`];
+                });
+            }
+
+            // Add modifiers from NEW race
+            selectedRace.choiceModifiers.forEach((mod, index) => {
+                characterState.additionalAbilityScores[`Race-${selectedRace.name} extra ability score n.${index}`] = {
+                    source: `${selectedRace.name} extra ability score n.${index}`,
+                    increment: mod,
+                    chosenScore: null
+                };
+            });
+
+            // Update tracked race
+            previousRace = characterState.race;
+        } else {
+            // If race set to Default, remove previous race modifiers
+            if (previousRace !== "Default") {
+                const prevRaceData = racesData[previousRace];
+                prevRaceData.choiceModifiers.forEach((_, index) => {
+                    delete characterState.additionalAbilityScores[`Race-${prevRaceData.name} extra ability score n.${index}`];
+                });
+            }
+            previousRace = "Default";
+        }
     });
 
 </script>
@@ -61,12 +99,12 @@
 
 {#if showCreationModal}
     <Modal
-            class="relative overflow-visible box-border"
+            class="relative overflow-scroll box-border"
             title="Create a new character"
             size="xl"
             form
             bind:open={showCreationModal}
-            onsubmit={() => showCreationModal = false}
+            onsubmit={() => console.log(characterState)}
     >
         <Label for="name">Name</Label>
         <Input
@@ -91,7 +129,7 @@
                 {#snippet header()}
                     <Label class="text-xl" for="Ability">Ability Scores</Label>
                 {/snippet}
-                <AbilityScoreComp bind:characterState={characterState} />
+                <AbilityScoreComp bind:characterState={characterState} isInCharacterCreation />
             </AccordionItem>
         </Accordion>
 

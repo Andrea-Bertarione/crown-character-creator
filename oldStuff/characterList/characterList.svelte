@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { Character } from "../../State/characters.state";
+    import { Character } from "../characters.state";
     import {Accordion, AccordionItem, Card, Label} from "flowbite-svelte";
-    import { charactersState } from "../../State/characters.state";
+    import { charactersState } from "../characters.state";
 
     // Subscribe to store changes
     let characters: Character[] = $derived.by(() => {

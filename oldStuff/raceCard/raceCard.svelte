@@ -6,11 +6,11 @@
         type FeatureChoiceType,
         Race,
         skillList
-    } from "../../State/characters.state.ts";
-    import { Character, type AbilityScore, languageList, abilityScores } from "../../State/characters.state.ts";
-    import featureList from "../../data/features.data";
-    import {getAvailableItems} from "$lib/utils/featureFilters";
-    import {syncToCharacter as syncGeneral} from "$lib/utils/characterSync";
+    } from "../characters.state.ts";
+    import { Character, type AbilityScore, languageList, abilityScores } from "../characters.state.ts";
+    import featureList from "../features.data";
+    import {getAvailableItems} from "../featureFilters";
+    import {syncToCharacter as syncGeneral} from "../characterSync";
     import ChoiceSelector from "../choiceSelector/choiceSelector.svelte";
 
     import { onMount } from 'svelte';

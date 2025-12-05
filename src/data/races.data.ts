@@ -1,10 +1,9 @@
-import { Race } from "../State/characters.state";
 export type CharacterRace = "Default" | "Human" | "Elf" | "Dwarf" | "Halfling" | "Dragonborn" | "Gnome" | "Half-Elf" | "Half-Orc" | "Tiefling";
-import type { CharacterSize, CharacterLanguage, CharacterStats } from "../State/characters.state";
+import type { CharacterSize, CharacterLanguage, AbilityScore} from "$lib/characterCreation.svelte";
 
 export interface RaceData {
     name: CharacterRace;
-    fixedModifiers: CharacterStats;
+    fixedModifiers: Record<AbilityScore, number>;
     choiceModifiers: number[];
     features: string[];
     size: CharacterSize;
@@ -17,7 +16,7 @@ export interface RaceData {
 export const raceList: RaceData[] = [
     {
         name: "Human",
-        fixedModifiers: { str: 1, dex: 1, con: 1, int: 1, wis: 1, cha: 1 },
+        fixedModifiers: { strength: 1, dexterity: 1, constitution: 1, intelligence: 1, wisdom: 1, charisma: 1 },
         choiceModifiers: [],
         features: ["Skill Versatility", "Menacing", "Expertise"],
         size: "Medium",
@@ -28,9 +27,9 @@ export const raceList: RaceData[] = [
     },
     {
         name: "Elf",
-        fixedModifiers: { str: 0, dex: 2, con: 0, int: 0, wis: 0, cha: 0 },
+        fixedModifiers: { strength: 0, dexterity: 2, constitution: 0, intelligence: 0, wisdom: 0, charisma: 0 },
         choiceModifiers: [],
-        features: ["Darkvision", "Keen Senses", "Fey Ancestry", "Trance"],
+        features: ["Darkvision", "Keen Senses", "Fey Ancestrengthy", "Trance"],
         size: "Medium",
         speed: 9,
         languages: ["Common", "Elvish"],
@@ -39,7 +38,7 @@ export const raceList: RaceData[] = [
     },
     {
         name: "Dwarf",
-        fixedModifiers: { str: 0, dex: 0, con: 2, int: 0, wis: 0, cha: 0 },
+        fixedModifiers: { strength: 0, dexterity: 0, constitution: 2, intelligence: 0, wisdom: 0, charisma: 0 },
         choiceModifiers: [],
         features: ["Darkvision", "Dwarven Resilience", "Dwarven Combat Training", "Stonecunning"],
         size: "Medium",
@@ -50,7 +49,7 @@ export const raceList: RaceData[] = [
     },
     {
         name: "Halfling",
-        fixedModifiers: { str: 0, dex: 2, con: 0, int: 0, wis: 0, cha: 0 },
+        fixedModifiers: { strength: 0, dexterity: 2, constitution: 0, intelligence: 0, wisdom: 0, charisma: 0 },
         choiceModifiers: [],
         features: ["Lucky", "Brave", "Halfling Nimbleness"],
         size: "Small",
@@ -61,9 +60,9 @@ export const raceList: RaceData[] = [
     },
     {
         name: "Dragonborn",
-        fixedModifiers: { str: 2, dex: 0, con: 0, int: 0, wis: 0, cha: 1 },
+        fixedModifiers: { strength: 2, dexterity: 0, constitution: 0, intelligence: 0, wisdom: 0, charisma: 1 },
         choiceModifiers: [],
-        features: ["Draconic Ancestry", "Breath Weapon", "Damage Resistance"],
+        features: ["Draconstitutionic Ancestrengthy", "Breath Weapon", "Damage Resistance"],
         size: "Medium",
         speed: 9,
         languages: ["Common", "Draconic"],
@@ -72,7 +71,7 @@ export const raceList: RaceData[] = [
     },
     {
         name: "Gnome",
-        fixedModifiers: { str: 0, dex: 0, con: 0, int: 2, wis: 0, cha: 0 },
+        fixedModifiers: { strength: 0, dexterity: 0, constitution: 0, intelligence: 2, wisdom: 0, charisma: 0 },
         choiceModifiers: [],
         features: ["Darkvision", "Gnome Cunning", "Gnome Ingenuity"],
         size: "Small",
@@ -83,9 +82,9 @@ export const raceList: RaceData[] = [
     },
     {
         name: "Half-Elf",
-        fixedModifiers: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 2 },
+        fixedModifiers: { strength: 0, dexterity: 0, constitution: 0, intelligence: 0, wisdom: 0, charisma: 2 },
         choiceModifiers: [1, 1],
-        features: ["Darkvision", "Fey Ancestry", "Skill Versatility"],
+        features: ["Darkvision", "Fey Ancestrengthy", "Skill Versatility"],
         size: "Medium",
         speed: 9,
         languages: ["Common", "Elvish"],
@@ -94,7 +93,7 @@ export const raceList: RaceData[] = [
     },
     {
         name: "Half-Orc",
-        fixedModifiers: { str: 2, dex: 0, con: 1, int: 0, wis: 0, cha: 0 },
+        fixedModifiers: { strength: 2, dexterity: 0, constitution: 1, intelligence: 0, wisdom: 0, charisma: 0 },
         choiceModifiers: [],
         features: ["Darkvision", "Menacing", "Relentless Endurance"],
         size: "Medium",
@@ -105,7 +104,7 @@ export const raceList: RaceData[] = [
     },
     {
         name: "Tiefling",
-        fixedModifiers: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 2 },
+        fixedModifiers: { strength: 0, dexterity: 0, constitution: 0, intelligence: 0, wisdom: 0, charisma: 2 },
         choiceModifiers: [1],
         features: ["Darkvision", "Hellish Resistance", "Infernal Legacy"],
         size: "Medium",
@@ -116,4 +115,8 @@ export const raceList: RaceData[] = [
     },
 ];
 
-export default raceList;
+export const racesData = Object.fromEntries(
+    raceList.map(race => [race.name, race])
+) as Record<CharacterRace, RaceData>;
+
+export default racesData;

@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import {LocalStore} from "$lib/localStore.svelte";
-import { type CharacterRace } from "../data/races.data";
+import {LocalStore} from "src/lib/localStore.svelte.js";
+import { type CharacterRace } from "../src/data/races.data";
 
 export type CharacterClassType = "Fighter" | "Wizard" | "Rogue" | "Monk" | "Cleric" | "Paladin" | "Druid" | "Bard" | "Barbarian" | "Sorcerer" | "Ranger" | "Warlock" | "Artificer";
 export type CharacterStatus = "Alive" | "Dead" | "unknown";

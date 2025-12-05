@@ -1,4 +1,4 @@
-import { Character, skillList, savingThrowList, armorProficiencyList, weaponProficiencyList, toolProficiencyList, type Spell } from "../State/characters.state";
+import { Character, skillList, savingThrowList, armorProficiencyList, weaponProficiencyList, toolProficiencyList, type Spell } from "./characters.state";
 
 export const featureList: {
     [key: string]: {

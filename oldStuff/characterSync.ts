@@ -1,5 +1,5 @@
-import type {Character, FeatureChoiceType, Race} from "../../State/characters.state";
-import featureList from "../../data/features.data";
+import type {Character, FeatureChoiceType, Race} from "./characters.state";
+import featureList from "./features.data";
 
 export function syncToCharacter(
     characterInstance: Character,

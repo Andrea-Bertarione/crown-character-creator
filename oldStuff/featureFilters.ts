@@ -1,4 +1,4 @@
-import type { Character } from "../../State/characters.state";
+import type { Character } from "./characters.state";
 
 export type SelectItem = { value: string; name: string; disabled?: boolean };
 

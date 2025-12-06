@@ -54,8 +54,8 @@
 
             // Add modifiers from NEW race
             selectedRace.choiceModifiers.forEach((mod, index) => {
-                characterState.additionalAbilityScores[`Race-${selectedRace.name} extra ability score n.${index}`] = {
-                    source: `${selectedRace.name} extra ability score n.${index}`,
+                characterState.additionalAbilityScores[`Race-${selectedRace.name} n.${index}`] = {
+                    source: `${selectedRace.name}`,
                     increment: mod,
                     chosenScore: null
                 };
@@ -68,7 +68,7 @@
             if (previousRace !== "Default") {
                 const prevRaceData = racesData[previousRace];
                 prevRaceData.choiceModifiers.forEach((_, index) => {
-                    delete characterState.additionalAbilityScores[`Race-${prevRaceData.name} extra ability score n.${index}`];
+                    delete characterState.additionalAbilityScores[`Race-${prevRaceData.name} n.${index}`];
                 });
             }
             previousRace = "Default";

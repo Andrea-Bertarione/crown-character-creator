@@ -137,7 +137,13 @@
 
         Object.entries(characterState.abilityScores).forEach(([ability, baseScore]) => {
             const raceMod = racesData[characterState.race as CharacterRace]?.fixedModifiers[ability as AbilityScore] ?? 0;
-            characterState.abilityScoreComputed[ability as AbilityScore] = baseScore as number + raceMod;
+            let additionalPoints = 0;
+
+            Object.entries(characterState.additionalAbilityScores).filter(([key, value]) => value.chosenScore === ability).forEach(([key, value]) => {
+                additionalPoints += value.increment;
+            })
+
+            characterState.abilityScoreComputed[ability as AbilityScore] = baseScore as number + raceMod + additionalPoints;
         });
     });
 
@@ -208,6 +214,54 @@
         abilityToRolledScoreId[abilityScore] = selectedValueScore.id;
         characterState.abilityScores[abilityScore] = selectedValueScore.value;
     };
+
+    // Helper: get abilities already chosen (to prevent duplicates)
+    const chosenAbilities = $derived(
+        Object.values(characterState.additionalAbilityScores)
+            .filter(mod => mod.chosenScore)
+            .map(mod => mod.chosenScore)
+    );
+
+    // All ability options
+    const dropdownAdditionalAbilities = $derived(
+        Object.keys(characterState.abilityScores).map(name => ({
+            name: name,
+            value: name as AbilityScore,
+            disabled: false,
+        }))
+    );
+
+    // For EACH modifier, return its filtered options
+    const dropdownAdditionalAbilitiesPerModifier = $derived.by(() => {
+        const result: Record<string, typeof dropdownAdditionalAbilities> = {};
+
+        Object.entries(characterState.additionalAbilityScores).forEach(([modKey, mod]) => {
+            result[modKey] = dropdownAdditionalAbilities.map(ability => {
+                let isDisabled = false;
+
+                // If race modifier: disable if race already gives that ability a boost
+                if (modKey.startsWith("Race")) {
+                    const raceData = racesData[characterState.race as CharacterRace];
+                    isDisabled = raceData?.fixedModifiers[ability.value] !== 0;
+                }
+
+                // Disable if this ability is already chosen by another modifier
+                // (BUT allow re-choosing the same one if this modifier had it)
+                if (chosenAbilities.includes(ability.value) && mod.chosenScore !== ability.value) {
+                    isDisabled = true;
+                }
+
+                return {
+                    name: ability.name,
+                    value: ability.value,
+                    disabled: isDisabled,
+                };
+            });
+        });
+
+        return result;
+    });
+
 </script>
 
 <Table>
@@ -216,8 +270,9 @@
             <div class="flex items-center gap-x-4">
                 Ability Scores
                     {#if scoreSelectionValue === "Point Buy"}
-                        <div class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">
-                            Points Remaining: <span class="text-xl">{pointsScoreValue} / 27 </span>
+                        <div class="flex flex-col bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">
+                            Points:
+                            <span class="text-xl">{pointsScoreValue} / 27 </span>
                         </div>
                     {/if}
             </div>
@@ -245,14 +300,7 @@
                         <Dropdown simple>
                             {#each Object.entries(characterState.additionalAbilityScores) as [key, val]}
                                 <DropdownItem>
-                                    <Select placeholder={val.source} items={Object.entries(characterState.abilityScores).
-                                    map(([name,  value]) => {
-                                        return {
-                                            name: name,
-                                            value: name,
-                                            disabled: racesData[characterState.race].fixedModifiers[name] !== 0,
-                                        }
-                                    })} />
+                                    <Select items={dropdownAdditionalAbilitiesPerModifier[key]} bind:value={characterState.additionalAbilityScores[key].chosenScore} placeholder={key}/>
                                 </DropdownItem>
                             {/each}
                         </Dropdown>
@@ -293,8 +341,14 @@
                     </TableBodyCell>
                 {/if}
                 {#if hasAdditionalModifiers}
-                    <TableBodyCell>
-
+                    <TableBodyCell class="flex flex-row gap-5">
+                        {#each Object.entries(characterState.additionalAbilityScores).filter(([key, value]) => value.chosenScore === abilities.ability) as [key, val]}
+                            <Card class="relative text-xl justify-center items-center h-16">
+                                {val.source}
+                                <span>{val.increment > 0 ? '+' : ''}{val.increment}</span>
+                                <button class="absolute top-0 right-3 text-red-600" onclick={() => {characterState.additionalAbilityScores[key].chosenScore = null}}>X</button>
+                            </Card>
+                        {/each}
                     </TableBodyCell>
                 {/if}
             </TableBodyRow>

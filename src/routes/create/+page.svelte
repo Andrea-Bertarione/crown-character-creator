@@ -2,78 +2,13 @@
     import {Accordion, AccordionItem, GradientButton, Input, Label, Modal, Select} from "flowbite-svelte";
     import Header from "../../components/header/header.svelte";
     import AbilityScoreComp from "../../components/abilityScoreComp/abilityScoreComp.svelte";
-    import {type AbilityScore, type Character} from "$lib/characterCreation.svelte";
-    import {type CharacterRace, racesData} from "../../data/races.data";
-    import {proficienciesList} from "../../data/proficiencies.data";
+    import RaceFeaturesComp from "../../components/raceFeaturesComp/raceFeaturesComp.svelte";
+    import LanguagesComp from "../../components/languagesComp/languagesComp.svelte";
+    import { characterCreationState } from "$lib/characterCreation.svelte";
     import { raceList, type RaceData } from "../../data/races.data";
-
-    import {v4 as uuidv4} from "uuid";
-
-    let idGenerated: string = uuidv4();
 
     // States
     let showCreationModal = $state(false);
-    let characterState: Character = $state({
-        id: idGenerated,
-        name: "",
-        race: "Default",
-        abilityScoreComputed: {
-            strength: 10,
-            dexterity: 10,
-            constitution: 10,
-            wisdom: 10,
-            intelligence: 10,
-            charisma: 10,
-        } as Record<AbilityScore, number>,
-        abilityScores: {
-            strength: 10,
-            dexterity: 10,
-            constitution: 10,
-            wisdom: 10,
-            intelligence: 10,
-            charisma: 10,
-        } as Record<AbilityScore, number>,
-        additionalAbilityScores: {},
-        proficiencies: proficienciesList,
-        features: [],
-    });
-
-    let previousRace = $state<CharacterRace | "Default">("Default");
-
-    $effect(() => {
-        if (characterState.race !== "Default") {
-            const selectedRace = racesData[characterState.race as CharacterRace];
-
-            // Remove modifiers from PREVIOUS race
-            if (previousRace !== "Default") {
-                const prevRaceData = racesData[previousRace];
-                prevRaceData.choiceModifiers.forEach((_, index) => {
-                    delete characterState.additionalAbilityScores[`Race-${prevRaceData.name} extra ability score n.${index}`];
-                });
-            }
-
-            // Add modifiers from NEW race
-            selectedRace.choiceModifiers.forEach((mod, index) => {
-                characterState.additionalAbilityScores[`Race-${selectedRace.name} n.${index}`] = {
-                    source: `${selectedRace.name}`,
-                    increment: mod,
-                    chosenScore: null
-                };
-            });
-
-            // Update tracked race
-            previousRace = characterState.race;
-        } else {
-            // If race set to Default, remove previous race modifiers
-            if (previousRace !== "Default") {
-                const prevRaceData = racesData[previousRace];
-                prevRaceData.choiceModifiers.forEach((_, index) => {
-                    delete characterState.additionalAbilityScores[`Race-${prevRaceData.name} n.${index}`];
-                });
-            }
-            previousRace = "Default";
-        }
-    });
 
 </script>
 
@@ -81,8 +16,8 @@
 <div class="flex flex-col items-center justify-center relative">
         <button
                 onclick={() => {
-                    idGenerated = uuidv4();
-                    showCreationModal = true
+                    showCreationModal = true;
+                    characterCreationState.reset();
                 }}
                 class="mt-30 w-full max-w-md mx-auto flex flex-col items-center justify-center gap-6 p-12 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-dashed border-primary/40 hover:border-primary/60 hover:dark:border-white transition-all group cursor-pointer"
         >
@@ -104,19 +39,19 @@
             size="xl"
             form
             bind:open={showCreationModal}
-            onsubmit={() => console.log(characterState)}
+            onsubmit={() => characterCreationState.logCharacter()}
     >
         <Label for="name">Name</Label>
         <Input
                 id="name"
-                bind:value={characterState.name}
+                bind:value={characterCreationState.name}
                 placeholder="Insert your character name"
         />
 
         <Label for="race">Race</Label>
         <Select
                 id="race"
-                bind:value={characterState.race}
+                bind:value={characterCreationState.race}
                 items={raceList.map((race: RaceData) => ({
                         name: race.name,
                         value: race.name,
@@ -125,12 +60,28 @@
         />
 
         <Accordion>
+            {#if characterCreationState.race !== "Default"}
+                <AccordionItem>
+                    {#snippet header()}
+                        <Label class="text-xl" for="RaceFeatures">Race Features</Label>
+                    {/snippet}
+                    <RaceFeaturesComp />
+                </AccordionItem>
+            {/if}
             <AccordionItem>
                 {#snippet header()}
                     <Label class="text-xl" for="Ability">Ability Scores</Label>
                 {/snippet}
-                <AbilityScoreComp bind:characterState={characterState} isInCharacterCreation />
+                <AbilityScoreComp isInCharacterCreation />
             </AccordionItem>
+            {#if characterCreationState.race !== "Default"}
+                <AccordionItem>
+                    {#snippet header()}
+                        <Label class="text-xl" for="Languages">Languages</Label>
+                    {/snippet}
+                    <LanguagesComp />
+                </AccordionItem>
+            {/if}
         </Accordion>
 
         <GradientButton type="submit">Create</GradientButton>

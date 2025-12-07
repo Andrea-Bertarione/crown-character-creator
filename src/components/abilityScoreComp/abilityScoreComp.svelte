@@ -1,7 +1,8 @@
 <script lang="ts">
     import { Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Select, Card, Input, Dropdown, DropdownItem, GradientButton} from "flowbite-svelte";
     import { ChevronDownOutline } from "flowbite-svelte-icons";
-    import type {AbilityScore, Character} from "$lib/characterCreation.svelte";
+    import { characterCreationState } from "$lib/characterCreation.svelte";
+    import type {AbilityScore} from "$lib/characterCreation.svelte";
     import AbilityScoreCard from "../abilityScoreCard/abilityScoreCard.svelte";
 
     import racesData, {type CharacterRace} from "../../data/races.data";
@@ -80,70 +81,59 @@
         charisma: null,
     });
 
-    let { characterState = $bindable(),  isInCharacterCreation = true }: { characterState: Character,  isInCharacterCreation: boolean } = $props<{ characterState: Character, isInCharacterCreation: boolean    }>();
+    let { isInCharacterCreation = true }: { isInCharacterCreation: boolean } = $props<{ isInCharacterCreation: boolean    }>();
     let computedAbilities = $derived(
-        Object.entries(characterState.abilityScoreComputed).map(([ability, score]) => ({
+        Object.entries(characterCreationState.abilityScoreComputed).map(([ability, score]) => ({
             ability: ability as AbilityScore,
-            scoreComputed: (characterState.abilityScoreComputed[ability as AbilityScore]),
+            scoreComputed: (characterCreationState.abilityScoreComputed[ability as AbilityScore]),
             score: score,
-            raceModifier: racesData[characterState.race as CharacterRace] && racesData[characterState.race as CharacterRace].fixedModifiers[ability as AbilityScore],
+            raceModifier: racesData[characterCreationState.race as CharacterRace] && racesData[characterCreationState.race as CharacterRace].fixedModifiers[ability as AbilityScore],
         }))
     );
 
     let hasRaceModifiers = $derived(
-        characterState.race !== "Default" &&
-        Object.entries(racesData[characterState.race as CharacterRace].fixedModifiers).
+        characterCreationState.race !== "Default" &&
+        Object.entries(racesData[characterCreationState.race as CharacterRace].fixedModifiers).
             filter(([key, value]) => value !== 0).length > 0
     );
 
     let hasAdditionalModifiers = $derived(
-        Object.entries(characterState.additionalAbilityScores).length > 0
+        Object.entries(characterCreationState.additionalAbilityScores).length > 0
     )
 
     let pointsScoreValue = $state(27);
 
     let increasePoint = (ability: AbilityScore) => {
         if (scoreSelectionValue === "Point Buy") {
-            if (pointsScoreValue - (characterState.abilityScores[ability as AbilityScore] + 1 > 13 ? 2 : 1) < 0 ||
-                characterState.abilityScores[ability as AbilityScore] + 1 > limitPointOnSelection[scoreSelectionValue].max) {
+            if (pointsScoreValue - (characterCreationState.abilityScores[ability as AbilityScore] + 1 > 13 ? 2 : 1) < 0 ||
+                characterCreationState.abilityScores[ability as AbilityScore] + 1 > limitPointOnSelection[scoreSelectionValue].max) {
                 return;
             }
 
-            pointsScoreValue -= (characterState.abilityScores[ability as AbilityScore] + 1 > 13 ? 2 : 1)
+            pointsScoreValue -= (characterCreationState.abilityScores[ability as AbilityScore] + 1 > 13 ? 2 : 1)
         }
 
-        characterState.abilityScores[ability as AbilityScore]++;
+        characterCreationState.abilityScores[ability as AbilityScore]++;
     }
 
     let decreasePoint = (ability: AbilityScore) => {
         if (scoreSelectionValue === "Point Buy") {
-            if (characterState.abilityScores[ability as AbilityScore] - 1 < limitPointOnSelection[scoreSelectionValue].min) {
+            if (characterCreationState.abilityScores[ability as AbilityScore] - 1 < limitPointOnSelection[scoreSelectionValue].min) {
                 return;
             }
 
-            pointsScoreValue += (characterState.abilityScores[ability as AbilityScore] - 1 >= 13 ? 2 : 1)
+            pointsScoreValue += (characterCreationState.abilityScores[ability as AbilityScore] - 1 >= 13 ? 2 : 1)
         }
 
-        characterState.abilityScores[ability as AbilityScore]--;
+        characterCreationState.abilityScores[ability as AbilityScore]--;
     }
 
     $effect(() => {
-        Object.entries(characterState.abilityScores).forEach(([key, abilityScore]) => {
+        Object.entries(characterCreationState.abilityScores).forEach(([key, abilityScore]) => {
             const clamped = Math.min(Math.max(limitPointOnSelection[scoreSelectionValue].min, abilityScore as number), limitPointOnSelection[scoreSelectionValue].max);
             if (clamped !== abilityScore) {
-                characterState.abilityScores[key as AbilityScore] = clamped;
+                characterCreationState.abilityScores[key as AbilityScore] = clamped;
             }
-        });
-
-        Object.entries(characterState.abilityScores).forEach(([ability, baseScore]) => {
-            const raceMod = racesData[characterState.race as CharacterRace]?.fixedModifiers[ability as AbilityScore] ?? 0;
-            let additionalPoints = 0;
-
-            Object.entries(characterState.additionalAbilityScores).filter(([key, value]) => value.chosenScore === ability).forEach(([key, value]) => {
-                additionalPoints += value.increment;
-            })
-
-            characterState.abilityScoreComputed[ability as AbilityScore] = baseScore as number + raceMod + additionalPoints;
         });
     });
 
@@ -158,8 +148,8 @@
         disabled: true,
     })));
     const setStartingScoreValues = () => {
-        Object.entries(characterState.abilityScores).forEach(([key, value]) => {
-            characterState.abilityScores[key as AbilityScore] = startingPointsOnSelection[scoreSelectionValue][key as AbilityScore];
+        Object.entries(characterCreationState.abilityScores).forEach(([key, value]) => {
+            characterCreationState.abilityScores[key as AbilityScore] = startingPointsOnSelection[scoreSelectionValue][key as AbilityScore];
         })
 
         if (scoreSelectionValue === "Point Buy") {
@@ -212,19 +202,19 @@
 
         // Update tracking
         abilityToRolledScoreId[abilityScore] = selectedValueScore.id;
-        characterState.abilityScores[abilityScore] = selectedValueScore.value;
+        characterCreationState.abilityScores[abilityScore] = selectedValueScore.value;
     };
 
     // Helper: get abilities already chosen (to prevent duplicates)
     const chosenAbilities = $derived(
-        Object.values(characterState.additionalAbilityScores)
+        Object.values(characterCreationState.additionalAbilityScores)
             .filter(mod => mod.chosenScore)
             .map(mod => mod.chosenScore)
     );
 
     // All ability options
     const dropdownAdditionalAbilities = $derived(
-        Object.keys(characterState.abilityScores).map(name => ({
+        Object.keys(characterCreationState.abilityScores).map(name => ({
             name: name,
             value: name as AbilityScore,
             disabled: false,
@@ -235,13 +225,13 @@
     const dropdownAdditionalAbilitiesPerModifier = $derived.by(() => {
         const result: Record<string, typeof dropdownAdditionalAbilities> = {};
 
-        Object.entries(characterState.additionalAbilityScores).forEach(([modKey, mod]) => {
+        Object.entries(characterCreationState.additionalAbilityScores).forEach(([modKey, mod]) => {
             result[modKey] = dropdownAdditionalAbilities.map(ability => {
                 let isDisabled = false;
 
                 // If race modifier: disable if race already gives that ability a boost
                 if (modKey.startsWith("Race")) {
-                    const raceData = racesData[characterState.race as CharacterRace];
+                    const raceData = racesData[characterCreationState.race as CharacterRace];
                     isDisabled = raceData?.fixedModifiers[ability.value] !== 0;
                 }
 
@@ -262,6 +252,9 @@
         return result;
     });
 
+    const setAdditionalChoiceValue = (e: Event & {
+        currentTarget: (EventTarget & HTMLSelectElement)
+    } , key: string) => {characterCreationState.setAdditionalAbilityScoresChoices(key, e.currentTarget.value as AbilityScore)}
 </script>
 
 <Table>
@@ -295,12 +288,12 @@
             <TableHeadCell>
                 <div class="flex flex-col justify-center items-center gap-4">
                     Additional Modifiers
-                    {#if isInCharacterCreation && Object.values(characterState.additionalAbilityScores).some(m => !m.chosenScore)}
+                    {#if isInCharacterCreation && Object.values(characterCreationState.additionalAbilityScores).some(m => !m.chosenScore)}
                         <GradientButton class="text-white dark:text-white">Assign <ChevronDownOutline class="ms-2 h-6 w-6 text-white dark:text-white" /></GradientButton>
                         <Dropdown simple>
-                            {#each Object.entries(characterState.additionalAbilityScores) as [key, val]}
+                            {#each Object.entries(characterCreationState.additionalAbilityScores) as [key, val]}
                                 <DropdownItem>
-                                    <Select items={dropdownAdditionalAbilitiesPerModifier[key]} bind:value={characterState.additionalAbilityScores[key].chosenScore} placeholder={key}/>
+                                    <Select items={dropdownAdditionalAbilitiesPerModifier[key]} onchange={(e) => setAdditionalChoiceValue(e, key)} placeholder={key}/>
                                 </DropdownItem>
                             {/each}
                         </Dropdown>
@@ -324,7 +317,7 @@
                             <svg class="w-4 h-4 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/></svg>
                         </button>
                     {/if}
-                    <Input readonly={!isInCharacterCreation || scoreSelectionValue !== "Manual" } class="text-2xl text-center h-16 max-w-20 {(scoreSelectionValue === 'Point Buy' || scoreSelectionValue === 'Manual') && isInCharacterCreation ? 'rounded-none' : ''}" type="number" bind:value={characterState.abilityScores[abilities.ability]} min={7} max={16}/>
+                    <Input readonly={!isInCharacterCreation || scoreSelectionValue !== "Manual" } class="text-2xl text-center h-16 max-w-20 {(scoreSelectionValue === 'Point Buy' || scoreSelectionValue === 'Manual') && isInCharacterCreation ? 'rounded-none' : ''}" type="number" bind:value={characterCreationState.abilityScores[abilities.ability]} min={7} max={16}/>
                     {#if isInCharacterCreation}
                         {#if (scoreSelectionValue === "Point Buy" || scoreSelectionValue === "Manual") }
                             <button onclick={() => {increasePoint((abilities.ability))}} title="increment" type="button" id="increment-button" class="rounded-tr-2xl rounded-br-2xl text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:bg-gray-700 hover:text-white cursor-pointer font-medium leading-5 rounded-e-base text-sm px-3 focus:outline-none h-16">
@@ -342,11 +335,11 @@
                 {/if}
                 {#if hasAdditionalModifiers}
                     <TableBodyCell class="flex flex-row gap-5">
-                        {#each Object.entries(characterState.additionalAbilityScores).filter(([key, value]) => value.chosenScore === abilities.ability) as [key, val]}
+                        {#each Object.entries(characterCreationState.additionalAbilityScores).filter(([key, value]) => value.chosenScore === abilities.ability) as [key, val]}
                             <Card class="relative text-xl justify-center items-center h-16">
                                 {val.source}
                                 <span>{val.increment > 0 ? '+' : ''}{val.increment}</span>
-                                <button class="absolute top-0 right-3 text-red-600" onclick={() => {characterState.additionalAbilityScores[key].chosenScore = null}}>X</button>
+                                <button class="absolute top-0 right-3 text-red-600" onclick={() => {characterCreationState.additionalAbilityScores[key].chosenScore = null}}>X</button>
                             </Card>
                         {/each}
                     </TableBodyCell>

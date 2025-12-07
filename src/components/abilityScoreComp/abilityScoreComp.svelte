@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Select, Card, Input, Dropdown, DropdownItem, GradientButton} from "flowbite-svelte";
+    import { Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Select, Card, Input, Dropdown, DropdownItem, GradientButton, Button} from "flowbite-svelte";
     import { ChevronDownOutline } from "flowbite-svelte-icons";
     import { characterCreationState } from "$lib/characterCreation.svelte";
     import type {AbilityScore} from "$lib/characterCreation.svelte";
@@ -8,6 +8,7 @@
     import racesData, {type CharacterRace} from "../../data/races.data";
     import {rollDice} from "$lib/diceRoller";
     import {v4 as uuidv4} from "uuid";
+    import {preventDefault} from "svelte/legacy";
 
     type ChoiceScoreSelection = "Manual" | "Point Buy" | "3D6" | "4D6 discard lowest";
 
@@ -87,14 +88,25 @@
             ability: ability as AbilityScore,
             scoreComputed: (characterCreationState.abilityScoreComputed[ability as AbilityScore]),
             score: score,
-            raceModifier: racesData[characterCreationState.race as CharacterRace] && racesData[characterCreationState.race as CharacterRace].fixedModifiers[ability as AbilityScore],
+            raceModifier: racesData[characterCreationState.race as CharacterRace] && racesData[characterCreationState.race as CharacterRace].fixedModifiers[ability as AbilityScore] + (racesData[characterCreationState.race as CharacterRace].subraces?.find(v => v.name === characterCreationState.subrace)?.fixedModifiers[ability as AbilityScore] || 0),
         }))
     );
 
     let hasRaceModifiers = $derived(
         characterCreationState.race !== "Default" &&
-        Object.entries(racesData[characterCreationState.race as CharacterRace].fixedModifiers).
-            filter(([key, value]) => value !== 0).length > 0
+        (
+            Object.entries(racesData[characterCreationState.race as CharacterRace].fixedModifiers)
+                .filter(([_, value]) => value !== 0).length > 0 ||
+            (characterCreationState.subrace &&
+                racesData[characterCreationState.race as CharacterRace]?.subraces
+                    ?.find(s => s.name === characterCreationState.subrace)?.fixedModifiers &&
+                Object.entries(
+                    racesData[characterCreationState.race as CharacterRace]
+                        ?.subraces!
+                        .find(s => s.name === characterCreationState.subrace)!
+                        .fixedModifiers
+                ).filter(([_, value]) => value !== 0).length > 0)
+        )
     );
 
     let hasAdditionalModifiers = $derived(
@@ -221,7 +233,6 @@
         }))
     );
 
-    // For EACH modifier, return its filtered options
     const dropdownAdditionalAbilitiesPerModifier = $derived.by(() => {
         const result: Record<string, typeof dropdownAdditionalAbilities> = {};
 
@@ -232,7 +243,12 @@
                 // If race modifier: disable if race already gives that ability a boost
                 if (modKey.startsWith("Race")) {
                     const raceData = racesData[characterCreationState.race as CharacterRace];
-                    isDisabled = raceData?.fixedModifiers[ability.value] !== 0;
+                    const raceModifier = raceData?.fixedModifiers[ability.value] || 0;
+                    const subraceModifier = characterCreationState.subrace && raceData?.subraces
+                        ?.find(s => s.name === characterCreationState.subrace)
+                        ?.fixedModifiers[ability.value] || 0;
+
+                    isDisabled = (raceModifier + subraceModifier) !== 0;
                 }
 
                 // Disable if this ability is already chosen by another modifier
@@ -251,6 +267,7 @@
 
         return result;
     });
+
 
     const setAdditionalChoiceValue = (e: Event & {
         currentTarget: (EventTarget & HTMLSelectElement)
@@ -311,22 +328,24 @@
                 <TableBodyCell>
                     <AbilityScoreCard score={abilities.scoreComputed} />
                 </TableBodyCell>
-                <TableBodyCell class="flex justify-start items-center">
-                    {#if isInCharacterCreation && (scoreSelectionValue === "Point Buy" || scoreSelectionValue === "Manual") }
-                        <button onclick={() => {decreasePoint(abilities.ability)}} title="decrement" type="button" id="decrement-button" class="rounded-tl-2xl rounded-bl-2xl text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:bg-gray-700 hover:text-white cursor-pointer font-medium leading-5 rounded-s-base text-sm px-3 focus:outline-none h-16">
-                            <svg class="w-4 h-4 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/></svg>
-                        </button>
-                    {/if}
-                    <Input readonly={!isInCharacterCreation || scoreSelectionValue !== "Manual" } class="text-2xl text-center h-16 max-w-20 {(scoreSelectionValue === 'Point Buy' || scoreSelectionValue === 'Manual') && isInCharacterCreation ? 'rounded-none' : ''}" type="number" bind:value={characterCreationState.abilityScores[abilities.ability]} min={7} max={16}/>
-                    {#if isInCharacterCreation}
-                        {#if (scoreSelectionValue === "Point Buy" || scoreSelectionValue === "Manual") }
-                            <button onclick={() => {increasePoint((abilities.ability))}} title="increment" type="button" id="increment-button" class="rounded-tr-2xl rounded-br-2xl text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:bg-gray-700 hover:text-white cursor-pointer font-medium leading-5 rounded-e-base text-sm px-3 focus:outline-none h-16">
-                                <svg class="w-4 h-4 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7 7V5"/></svg>
+                <TableBodyCell>
+                    <div class="flex flex-row items-center">
+                        {#if isInCharacterCreation && (scoreSelectionValue === "Point Buy" || scoreSelectionValue === "Manual") }
+                            <button onclick={() => {decreasePoint(abilities.ability)}} title="decrement" type="button" id="decrement-button" class="rounded-tl-2xl rounded-bl-2xl text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:bg-gray-700 hover:text-white cursor-pointer font-medium leading-5 rounded-s-base text-sm px-3 focus:outline-none h-16">
+                                <svg class="w-4 h-4 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/></svg>
                             </button>
-                        {:else}
-                            <Select class="ml-6 max-w-40" placeholder="Choose one score" items={availableScoreD6s} onchange={(e) => setRolledScore(e, abilities.ability)} />
                         {/if}
-                    {/if}
+                        <Input readonly={!isInCharacterCreation || scoreSelectionValue !== "Manual" } class="text-2xl text-center h-16 max-w-20 {(scoreSelectionValue === 'Point Buy' || scoreSelectionValue === 'Manual') && isInCharacterCreation ? 'rounded-none' : ''}" type="number" bind:value={characterCreationState.abilityScores[abilities.ability]} min={7} max={16}/>
+                        {#if isInCharacterCreation}
+                            {#if (scoreSelectionValue === "Point Buy" || scoreSelectionValue === "Manual") }
+                                <button onclick={() => {increasePoint((abilities.ability))}} title="increment" type="button" id="increment-button" class="rounded-tr-2xl rounded-br-2xl text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:bg-gray-700 hover:text-white cursor-pointer font-medium leading-5 rounded-e-base text-sm px-3 focus:outline-none h-16">
+                                    <svg class="w-4 h-4 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7 7V5"/></svg>
+                                </button>
+                            {:else}
+                                <Select class="ml-6 max-w-40" placeholder="Choose one score" items={availableScoreD6s} onchange={(e) => setRolledScore(e, abilities.ability)} />
+                            {/if}
+                        {/if}
+                    </div>
                 </TableBodyCell>
                 {#if hasRaceModifiers}
                     <TableBodyCell>
@@ -334,16 +353,25 @@
                     </TableBodyCell>
                 {/if}
                 {#if hasAdditionalModifiers}
-                    <TableBodyCell class="flex flex-row gap-5">
+                    <TableBodyCell class="">
+                        <div class="flex flex-row justify-center gap-5 relative overflow-visible">
                         {#each Object.entries(characterCreationState.additionalAbilityScores).filter(([key, value]) => value.chosenScore === abilities.ability) as [key, val]}
-                            <Card class="relative text-xl justify-center items-center h-16">
-                                {val.source}
-                                <span>{val.increment > 0 ? '+' : ''}{val.increment}</span>
-                                <button class="absolute top-0 right-3 text-red-600" onclick={() => {characterCreationState.additionalAbilityScores[key].chosenScore = null}}>X</button>
-                            </Card>
+                            <div class="relative">
+                                <Card class="text-xl justify-center items-center h-16 p-8 whitespace-nowrap">
+                                    <div class="flex flex-col items-center gap-1">
+                                        <span class="text-sm">{val.source}</span>
+                                        <span class="text-lg font-bold">{val.increment > 0 ? '+' : ''}{val.increment}</span>
+                                    </div>
+                                    <Button class="absolute top-0 right-2 p-0 text-red-600 hover:text-red-400 text-lg" onclick={() => {
+                                        characterCreationState.setAdditionalAbilityScoresChoices(key, null);
+                                    }}>✕</Button>
+                                </Card>
+                            </div>
                         {/each}
+                        </div>
                     </TableBodyCell>
                 {/if}
+
             </TableBodyRow>
         {/each}
     </TableBody>

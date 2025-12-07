@@ -4,7 +4,7 @@
     import { languagesMap } from "../../data/languages.data";
     import racesData from "../../data/races.data";
 
-    let languageChoicesCount = $derived(racesData[characterCreationState.race]?.languageChoices ?? 0);
+    let languageChoicesCount = $derived((racesData[characterCreationState.race]?.languageChoices ?? 0) + (racesData[characterCreationState.race].subraces?.find(v => v.name === characterCreationState.subrace)?.languageChoices || 0));
 
     let availableLanguages = $derived(
         Object.keys(languagesMap).map(key => ({
@@ -74,7 +74,7 @@
                             />
                             {#if characterCreationState.languagesChoices[i]}
                                 <span class="text-sm text-gray-400">
-                                    ({languagesMap[characterCreationState.languagesChoices[i]].script})
+                                    (Alphabet: {languagesMap[characterCreationState.languagesChoices[i]].script})
                                 </span>
                             {/if}
                         </span>

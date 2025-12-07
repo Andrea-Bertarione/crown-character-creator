@@ -1,15 +1,15 @@
 <script lang="ts">
-    import {Accordion, AccordionItem, GradientButton, Input, Label, Modal, Select} from "flowbite-svelte";
+    import {Accordion, AccordionItem, GradientButton, Input, Label, Modal} from "flowbite-svelte";
     import Header from "../../components/header/header.svelte";
     import AbilityScoreComp from "../../components/abilityScoreComp/abilityScoreComp.svelte";
     import RaceFeaturesComp from "../../components/raceFeaturesComp/raceFeaturesComp.svelte";
     import LanguagesComp from "../../components/languagesComp/languagesComp.svelte";
+    import RaceSelector from "../../components/raceSelector/raceSelector.svelte";
     import { characterCreationState } from "$lib/characterCreation.svelte";
-    import { raceList, type RaceData } from "../../data/races.data";
 
     // States
     let showCreationModal = $state(false);
-
+    let showRaceModal = $state(false);
 </script>
 
 <Header />
@@ -49,15 +49,9 @@
         />
 
         <Label for="race">Race</Label>
-        <Select
-                id="race"
-                bind:value={characterCreationState.race}
-                items={raceList.map((race: RaceData) => ({
-                        name: race.name,
-                        value: race.name,
-                    }))}
-                placeholder="Insert your character name"
-        />
+        <GradientButton id="race" onclick={() => (showRaceModal = true)}>
+            {characterCreationState.race === "Default" ? "Select a Race..." : characterCreationState.race}{characterCreationState.subrace === null ? "" : `(${characterCreationState.subrace})`}
+        </GradientButton>
 
         <Accordion>
             {#if characterCreationState.race !== "Default"}
@@ -86,4 +80,13 @@
 
         <GradientButton type="submit">Create</GradientButton>
     </Modal>
+
+    <RaceSelector
+            bind:isOpen={showRaceModal}
+            bind:selectedRace={characterCreationState.race}
+            bind:selectedSubrace={characterCreationState.subrace}
+            onSelect={(race) => {
+        characterCreationState.race = race;
+    }}
+    />
 {/if}

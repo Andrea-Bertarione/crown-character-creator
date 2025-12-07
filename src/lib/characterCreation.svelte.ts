@@ -1,6 +1,6 @@
 import {v4 as uuidv4} from "uuid";
 import {type CharacterProficiencies, proficienciesList} from "../data/proficiencies.data";
-import {type CharacterRace, racesData} from "../data/races.data";
+import {type CharacterRace, type RaceData, racesData} from "../data/races.data";
 
 export type AbilityScore = "strength" | "dexterity" | "constitution" | "wisdom" | "intelligence" | "charisma";
 export type CharacterSize = "Small" | "Medium" | "Large" | "Huge";
@@ -10,6 +10,7 @@ export class Character {
     id: string;
     name: string;
     race: CharacterRace;
+    subrace: string | null;
     abilityScoreComputed: Record<AbilityScore, number>;
     abilityScores: Record<AbilityScore, number>;
     additionalAbilityScoresChoices: Record<string, AbilityScore | null>;
@@ -36,6 +37,7 @@ export class Character {
             charisma: 10,
         });
 
+        this.subrace = $state(null);
         this.abilityScoreComputed = $derived.by(() => {
             const result: Record<AbilityScore, number> = {
                 strength: 0,
@@ -49,11 +51,13 @@ export class Character {
             (Object.entries(this.abilityScores) as [AbilityScore, number][]).forEach(
                 ([ability, baseScore]) => {
                     const raceMod = racesData[this.race as CharacterRace]?.fixedModifiers[ability] ?? 0;
+                    const subRaceMod = this.getSubraceData(racesData[this.race as CharacterRace])?.fixedModifiers[ability] ?? 0;
+
                     const additionalPoints = Object.values(this.additionalAbilityScores)
                         .filter((mod) => mod.chosenScore === ability)
                         .reduce((sum, mod) => sum + mod.increment, 0);
 
-                    result[ability] = baseScore + raceMod + additionalPoints;
+                    result[ability] = baseScore + raceMod + subRaceMod + additionalPoints;
                 }
             );
 
@@ -62,8 +66,9 @@ export class Character {
 
         this.additionalAbilityScoresChoices = $state({});
         this.additionalAbilityScores = $derived.by(() => {
-            if (this.race === "Default") { return {} }
-            const selectedRace = racesData[this.race];
+            const selectedRace = this.getRaceData();
+            if (selectedRace === null) { return {} }
+
             const additionalChoicesHelper = this.additionalAbilityScoresChoices;
             const additionalAbilityScoresHelper: Record<string, {
                 source: string;
@@ -72,28 +77,57 @@ export class Character {
             }> = {};
 
             selectedRace.choiceModifiers.forEach((mod, index) => {
-                additionalAbilityScoresHelper[`Race-${selectedRace.name} n.${index}`] ={
+                additionalAbilityScoresHelper[`Race-${selectedRace.name} n.${index}`] = {
                     source: `${selectedRace.name}`,
                     increment: mod,
                     chosenScore: additionalChoicesHelper[`Race-${selectedRace.name} n.${index}`] || null
                 };
             });
 
+            const selectedSubRace = this.getSubraceData(selectedRace);
+            if (selectedSubRace) {
+                selectedSubRace.choiceModifiers?.forEach((mod, index) => {
+                    additionalAbilityScoresHelper[`Race-${selectedSubRace.name} n.${index}`] = {
+                       source: `${selectedSubRace.name}`,
+                       increment: mod,
+                       chosenScore: additionalChoicesHelper[`Race-${selectedSubRace.name} n.${index}`] || null
+                   }
+                });
+            }
+
             return additionalAbilityScoresHelper;
         })
 
         this.raceFeatures = $derived.by(() => {
-            if (this.race === "Default") { return [] }
+            const selectedRace = this.getRaceData();
+            if (selectedRace === null) { return []}
 
-            const selectedRace = racesData[this.race];
-            return selectedRace.features.map(v => v);
+            let result = selectedRace.features.map(v => v);
+            if (this.subrace !== null && selectedRace.subraces !== undefined) {
+                const selectedSubrace = this.getSubraceData(selectedRace);
+
+                if (selectedSubrace) {
+                    result.concat(selectedSubrace.features);
+                }
+            }
+
+            return result;
         })
 
         this.languages = $derived.by(() => {
-            if (this.race === "Default") { return [] }
+            const selectedRace = this.getRaceData();
+            if (selectedRace === null) { return []}
 
-            const selectedRace = racesData[this.race];
-            return selectedRace.languages.map(v => v);
+            let result = selectedRace.languages.map(v => v);
+            if (this.subrace !== null && selectedRace.subraces !== undefined) {
+                const selectedSubrace = this.getSubraceData(selectedRace);
+
+                if (selectedSubrace) {
+                    result.concat(selectedSubrace.languages || []);
+                }
+            }
+
+            return result;
         })
 
         this.languagesChoices = $state([]);
@@ -101,7 +135,7 @@ export class Character {
         this.proficiencies = proficienciesList;
     }
 
-    setAdditionalAbilityScoresChoices = (key: string, value: AbilityScore) => {
+    setAdditionalAbilityScoresChoices = (key: string, value: AbilityScore | null) => {
         for (const choiceName in this.additionalAbilityScoresChoices) {
             if (!this.additionalAbilityScores.hasOwnProperty(choiceName)) {
                 delete this.additionalAbilityScoresChoices[choiceName];
@@ -111,10 +145,25 @@ export class Character {
         this.additionalAbilityScoresChoices[key] = value;
     }
 
+    getRaceData() {
+        if (this.race === "Default") { return null; }
+
+        return racesData[this.race];
+    }
+
+    getSubraceData = (raceData: RaceData) => {
+        if (this.subrace !== null && raceData.subraces !== undefined) {
+            return raceData.subraces.find(v => v.name === this.subrace) || null;
+        }
+
+        return null;
+    }
+
     reset = () => {
         this.id = uuidv4();
         this.name = "";
         this.race = "Default";
+        this.subrace = null;
         this.abilityScores = {
             strength: 10,
             dexterity: 10,
@@ -128,7 +177,7 @@ export class Character {
 
     logCharacter = () => {
         console.log(`Character ${this.id}`);
-        console.log($state.snapshot(this.name), "the", $state.snapshot(this.race));
+        console.log($state.snapshot(this.name), "the", $state.snapshot(this.race), `(${$state.snapshot(this.subrace)})`);
         console.log("Basic ability scores:", $state.snapshot(this.abilityScores));
         console.log("Computed ability scores:", $state.snapshot(this.abilityScoreComputed));
         console.log("Additional Ability Scores:", $state.snapshot(this.additionalAbilityScores));

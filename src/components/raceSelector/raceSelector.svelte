@@ -208,20 +208,17 @@
                                                 <span class="text-sky-400">•</span>
                                                 <span class="cursor-help hover:text-sky-500 transition-all">{feature}</span>
                                                 <Popover class="max-w-md p-3">
-                                                    {@const {name, description, icon} = featuresMap[feature] || {name: feature, description: "missing description", icon: "NoIcon"}}
-                                                    <Label for="feature" class="relative text-2xl">
-                                                        {name}
-                                                        <span class="text-3xl absolute top-0 right-0">{icon}</span>
-                                                    </Label>
-                                                    <div id="feature" class="mt-4 max-w-3/4">
-                                                        <p class="wrap-normal">{description}</p>
-                                                    </div>
+                                                    <RaceFeaturesCard feature={featuresMap[feature] || {name: feature, description: "missing description", icon: "NoIcon"}} />
                                                 </Popover>
                                             </p>
                                         {/each}
                                     </div>
                                 </div>
                             {/if}
+                        </div>
+                    {:else}
+                        <div class="flex justify-center items-center h-full">
+                            <p class="text-2xl">Select a race to view additional information...</p>
                         </div>
                     {/if}
                 {:else if step === "subrace" && tempRace}
@@ -287,20 +284,17 @@
                                                 <span class="text-sky-400">•</span>
                                                 <span class="cursor-help hover:text-sky-500 transition-all">{feature}</span>
                                                 <Popover class="max-w-md p-3">
-                                                    {@const {name, description, icon} = featuresMap[feature] || {name: feature, description: "missing description", icon: "NoIcon"}}
-                                                    <Label for="feature" class="relative text-2xl">
-                                                        {name}
-                                                        <span class="text-3xl absolute top-0 right-0">{icon}</span>
-                                                    </Label>
-                                                    <div id="feature" class="mt-4 max-w-3/4">
-                                                        <p class="wrap-normal">{description}</p>
-                                                    </div>
+                                                    <RaceFeaturesCard feature={featuresMap[feature] || {name: feature, description: "missing description", icon: "NoIcon"}} />
                                                 </Popover>
                                             </p>
                                         {/each}
                                     </div>
                                 </div>
                             {/if}
+                        </div>
+                    {:else}
+                        <div class="flex justify-center items-center h-full">
+                            <p class="text-2xl">Select a sub-race to view additional information...</p>
                         </div>
                     {/if}
                 {/if}

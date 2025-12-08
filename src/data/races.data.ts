@@ -82,7 +82,7 @@ export const raceList: RaceData[] = [
             {
                 name: "Dark Elf (Drow)",
                 fixedModifiers: { charisma: 1 },
-                features: ["Superior Darkvision", "Keen Senses", "Fey Ancestry", "Sunlight Sensitivity", "Drow Magic"],
+                features: ["Superior Darkvision", "Sunlight Sensitivity", "Drow Magic"],
                 description: "Drow, also known as dark elves, are primarily evil humanoid creatures that dwell deep in the Underdark with little love for those that dwell on the surface. They are known for their dark skin and white hair."
             }
         ]
@@ -93,7 +93,7 @@ export const raceList: RaceData[] = [
         choiceModifiers: [],
         features: ["Darkvision", "Dwarven Resilience", "Dwarven Combat Training", "Stonecunning"],
         size: "Medium",
-        speed: 8,
+        speed: 7.5,
         languages: ["Common", "Dwarvish"],
         languageChoices: 0,
         image: "https://www.dndbeyond.com/avatars/thumbnails/43940/451/340/340/638607448980217343.png",
@@ -119,7 +119,7 @@ export const raceList: RaceData[] = [
         choiceModifiers: [],
         features: ["Lucky", "Brave", "Halfling Nimbleness"],
         size: "Small",
-        speed: 8,
+        speed: 7.5,
         languages: ["Common", "Halfling"],
         languageChoices: 0,
         image: "https://www.dndbeyond.com/avatars/thumbnails/43940/520/340/340/638607450551607741.png",
@@ -249,7 +249,7 @@ export const raceList: RaceData[] = [
         choiceModifiers: [],
         features: ["Darkvision", "Gnome Cunning", "Gnome Ingenuity"],
         size: "Small",
-        speed: 8,
+        speed: 7.5,
         languages: ["Common", "Gnomish"],
         languageChoices: 0,
         image: "https://www.dndbeyond.com/avatars/thumbnails/43940/482/340/340/638607449736508079.png",

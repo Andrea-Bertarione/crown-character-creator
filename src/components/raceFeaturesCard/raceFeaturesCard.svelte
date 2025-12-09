@@ -7,7 +7,8 @@
 
     // Extract action from modifiers if it exists
     let action = $derived(
-        modifiers?.find(m => m.type === 'action')?.value
+        type == "active" &&
+        modifiers?.find(m => m.type === "action")?.value
     );
 
     let resources = $derived.by(() => {
@@ -32,7 +33,7 @@
         'ability-boost': 'red'
     };
 </script>
-
+{#if feature}
     <div class="flex justify-between items-start">
         <div class="flex-1">
             <Label for="feature" class="relative text-2xl">
@@ -42,7 +43,7 @@
 
             <div class="flex gap-2 mt-2">
                 <Badge color={typeColors[type]}>
-                    {type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')}
+                    {type && (type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' '))}
                 </Badge>
 
                 {#if frequency}
@@ -87,15 +88,30 @@
             <p class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">EFFECTS</p>
             <ul class="text-sm space-y-1">
                 {#each modifiers as modifier}
+                    {#if modifier.type === 'action'}
+                        <li class="text-sky-600 dark:text-sky-400">
+                            {modifier.value.reductionDice ? "🛡 " + modifier.value.reductionDice + " damage reduction" : ""}
+                            {modifier.value.damageDice ? "⚔️ " + modifier.value.damageDice + " " + modifier.value.damageType + " damage" : ""}
+                            {modifier.value.area ? "in an area of " + modifier.value.area : ""}
+                            {modifier.value.origin === "self" ? "around yourself" : ""}
+                        </li>
+                        <span>{modifier.value.save ? "Targets do a " + modifier.value.save + " saving throw against (" + modifier.value.cd + ")" : ""}</span>
+                    {/if}
                     {#if modifier.type === 'resistance'}
                         <li class="text-purple-600 dark:text-purple-400">
-                            🛡️ Resistance: <span class="capitalize">{modifier.value}</span>
+                            🛡️ Resistance: <span class="capitalize">{modifier.value.replace('-', ' ')}</span>
                         </li>
                     {/if}
 
                     {#if modifier.type === 'skill-proficiency'}
                         <li class="text-blue-600 dark:text-blue-400">
                             📚 Skill: <span class="capitalize">{modifier.value.replace('-', ' ')}</span>
+                        </li>
+                    {/if}
+
+                    {#if modifier.type === 'saving-throw'}
+                        <li class="text-teal-400 dark:text-teal-200">
+                            📚 Saving throw: <span class="capitalize">{modifier.value.type}</span> on {modifier.value.source.replace('-', ' ')}
                         </li>
                     {/if}
 
@@ -142,3 +158,6 @@
             </ul>
         </div>
     {/if}
+{:else}
+    <p>feature not found</p>
+{/if}

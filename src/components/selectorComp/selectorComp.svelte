@@ -71,3 +71,23 @@
         </div>
     </div>
 </Modal>
+
+<style>
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: oklch(68.5% 0.169 237.323);
+        border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: oklch(68.5% 0.169 237.323);
+    }
+</style>

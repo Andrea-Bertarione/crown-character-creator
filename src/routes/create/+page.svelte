@@ -28,6 +28,7 @@
     let tempChoices: {[key: string]: string } = $state({
         Race: "",
         Subrace: "",
+        AdditionalChangesRaceSub: "",
         Class: ""
     });
 
@@ -46,13 +47,26 @@
 
         //has race been selected
         const confirmedRace = racesData[tempChoices.Race as CharacterRace];
+        let hasSubrace = false;
         if (confirmedRace && confirmedRace.subraces && confirmedRace.subraces.length > 0) {
+            hasSubrace = true;
             stepsArray.push({
                 name: "Subrace",
                 header: "Select a Sub-Race" ,
                 side: confirmedRace.subraces.map(subrace => subrace.name as string),
                 confirm: "Select subrace"
             });
+        }
+
+        //additional choices
+        if (confirmedRace) {
+            const additionalChoicesRes = {
+                name: "AdditionalChangesRaceSub",
+                header: "Select additional choices and features",
+                confirm: "Confirm choices"
+            }
+
+
         }
 
         stepsArray.push({
@@ -88,7 +102,7 @@
 
 {#if showCreationModal}
     <Modal
-            class="relative overflow-scroll box-border"
+            class="relative box-border"
             title="Create a new character"
             size="xl"
             form
@@ -106,13 +120,7 @@
             <div class="flex flex-col gap-3 w-50">
                 <Label for="race">Race</Label>
                 <GradientButton id="race" onclick={() => (showSelectorModal  = true)}>
-                    {characterCreationState.race === "Default" ? "Select a Race..." : characterCreationState.race}{characterCreationState.subrace === null ? "" : `(${characterCreationState.subrace})`}
-                </GradientButton>
-            </div>
-            <div class="flex flex-col gap-3 w-50">
-                <Label for="class">Class</Label>
-                <GradientButton id="class" onclick={() => (showClassModal = true)}>
-                    {characterCreationState.class === null ? "Select a Class..." : characterCreationState.class}{characterCreationState.subClass === null ? "" : `(${characterCreationState.subClass})`}
+                    Edit selections...
                 </GradientButton>
             </div>
         </div>

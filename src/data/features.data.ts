@@ -1,7 +1,7 @@
 export type FeatureType = 'passive' | 'active' | 'resistance' | 'proficiency' | 'cantrip' | 'spell' | 'ability-boost';
 export type DamageType = 'fire' | 'cold' | 'lightning' | 'poison' | 'acid' | 'radiant' | 'necrotic' | 'psychic' | 'force' | 'bludgeoning' | 'piercing' | 'slashing' | 'thunder';
 export type SkillType = 'acrobatics' | 'animal-handling' | 'arcana' | 'athletics' | 'deception' | 'history' | 'insight' | 'intimidation' | 'investigation' | 'medicine' | 'nature' | 'perception' | 'performance' | 'persuasion' | 'religion' | 'sleight-of-hand' | 'stealth' | 'survival';
-export type ModifierType = 'action' | 'cantrip' | 'resistance' | 'skill-proficiency' | 'weapon-proficiency' | 'armor-proficiency' | 'tool-proficiency' | 'speed' | 'darkvision' | 'damage-bonus' | 'ac-bonus' | 'saving-throw' | 'hit-points' | 'expertise' | 'resource' | 'extra-attack' | 'spell-list' | 'ability-boost';
+export type ModifierType = 'action' | 'feat' | 'cantrip' | 'resistance' | 'immunity' | 'skill-proficiency' | 'weapon-proficiency' | 'armor-proficiency' | 'tool-proficiency' | 'speed' | 'darkvision' | 'damage-bonus' | 'ac-bonus' | 'saving-throw' | 'hit-points' | 'expertise' | 'resource' | 'extra-attack' | 'spell-list' | 'ability-boost';
 export type ResourceType = 'action' | 'bonus-action' | 'reaction' | 'movement' | 'spell-slot' | 'ki-point' | 'superiority-die' | 'bardic-inspiration' | 'sorcerous-point';
 
 export interface ActionResource {
@@ -452,7 +452,11 @@ export const featuresMap: {[key: string]: FeatureData} = {
         name: 'Skill Versatility',
         description: 'You gain proficiency in two skills of your choice.',
         icon: "📚",
-        type: 'proficiency'
+        type: 'proficiency',
+        modifiers: [
+            { type: "skill-proficiency", value: "choice", description: "you gain proficiency in the given skill"},
+            { type: "skill-proficiency", value: "choice", description: "you gain proficiency in the given skill"}
+        ]
     },
 
     // Half-Orc features
@@ -773,13 +777,57 @@ export const featuresMap: {[key: string]: FeatureData} = {
         icon: "🔥",
         type: 'passive'
     },
+    ["Specialized Design"]: {
+        name: "Specialized Design",
+        description: "You gain one skill proficiency and one tool proficiency of your choice.",
+        icon: "🛠",
+        type: "proficiency",
+        modifiers: [
+            { type: "skill-proficiency", value: "choice" },
+            { type: "tool-proficiency", value: "choice" }
+        ]
+    },
+    ["Integrated Protection"]: {
+        name: "Integrated Protection",
+        description: "Your body has built-in defensive layers, which can be enhanced with armor. You gain a +1 bonus to Armor Class. You can use an hour of your time to absorb or reject an armor and gain/remove the properties.",
+        icon: "🦾",
+        type: "ability-boost",
+        modifiers: [
+            {type: "ac-bonus", value: 1}
+        ]
+    },
+    ["Sentry's Rest"]: {
+        name: "Sentry's Rest",
+        description: "When you take a long rest, you must spend at least six hours in an inactive, motionless state, rather than sleeping. In this state, you appear inert, but it doesn’t render you unconscious, and you can see and hear as normal.",
+        icon: "🦻",
+        type: "passive"
+    },
+    ["Constructed Resilience"]: {
+        name: "Constructed Resilience",
+        description: "You were created to have remarkable fortitude, represented by the following benefits:\n" +
+            "\n" +
+            "    You have advantage on saving throws against being poisoned, and you have resistance to poison damage.\n" +
+            "    You don’t need to eat, drink, or breathe.\n" +
+            "    You are immune to disease.\n" +
+            "    You don't need to sleep, and magic can't put you to sleep.\n",
+        icon: "🧬",
+        type: "resistance",
+        modifiers: [
+            {type: "resistance", value: "poison"},
+            {type: "saving-throw", value: {source: "poisoned", boost: "advantage", type: "condition"}},
+            {type: "immunity", value: {source: "disease", type: "condition"}}
+        ]
+    },
 
     // Human features
     ["Feat at 1st Level"]: {
         name: 'Feat at 1st Level',
         description: 'You gain one feat of your choice.',
         icon: "⭐",
-        type: 'ability-boost'
+        type: 'ability-boost',
+        modifiers: [
+            { type: "feat", value: "choice" }
+        ]
     },
 
     // Additional features
@@ -788,12 +836,6 @@ export const featuresMap: {[key: string]: FeatureData} = {
         description: 'You know one additional cantrip of your choice from the wizard spell list.',
         icon: "✨",
         type: 'cantrip'
-    },
-    ["Extra Language"]: {
-        name: 'Extra Language',
-        description: 'You can speak, read, and write one extra language of your choice.',
-        icon: "📚",
-        type: 'proficiency'
     },
 
     // ==================== ARTIFICER FEATURES ====================
@@ -846,7 +888,7 @@ export const featuresMap: {[key: string]: FeatureData} = {
         level: 3,
         frequency: 'per-long-rest',
         modifiers: [
-            { type: 'ac-bonus', value: 15, description: 'Steel Defender AC' }
+            { type: 'ac-bonus', value: { AC: 15, HP: { from: "artificer-lvl", modifier: 5 }}, description: 'Steel Defender AC' }
         ]
     },
     ["Arcane Armor"]: {
@@ -890,7 +932,7 @@ export const featuresMap: {[key: string]: FeatureData} = {
         icon: "💪",
         type: 'passive',
         modifiers: [
-            { type: 'ac-bonus', value: 10, description: 'Unarmored defense: 10 + DEX + CON' }
+            { type: 'ac-bonus', value: { from: "con-modifier" }, description: 'Unarmored defense: 10 + DEX + CON' }
         ]
     },
     ["Reckless Attack"]: {
@@ -1009,7 +1051,8 @@ export const featuresMap: {[key: string]: FeatureData} = {
         icon: "⭐",
         type: 'passive',
         modifiers: [
-            { type: 'expertise', value: 'skills', description: 'Double proficiency on chosen skills' }
+            { type: 'expertise', value: 'choice', description: 'Double proficiency on chosen skill' },
+            { type: 'expertise', value: 'choice', description: 'Double proficiency on chosen skill' }
         ]
     },
     ["Font of Inspiration"]: {
@@ -1498,7 +1541,7 @@ export const featuresMap: {[key: string]: FeatureData} = {
         icon: "💪",
         type: 'passive',
         modifiers: [
-            { type: 'resistance', value: 'disease', description: 'Immune to disease' }
+            { type: 'resistance', value: {condition: "disease", boost: "immunity"}, description: 'Immune to disease' }
         ]
     },
     ["Sacred Weapon"]: {
@@ -1633,7 +1676,8 @@ export const featuresMap: {[key: string]: FeatureData} = {
         icon: "🎯",
         type: 'passive',
         modifiers: [
-            { type: 'expertise', value: 'skills', description: 'Double proficiency on chosen skills' }
+            { type: 'expertise', value: 'choice', description: 'Double proficiency on chosen skill' },
+            { type: 'expertise', value: 'choice', description: 'Double proficiency on chosen skill' }
         ]
     },
     ["Sneak Attack"]: {

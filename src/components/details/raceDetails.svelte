@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Popover } from "flowbite-svelte";
-    import RaceFeaturesCard from "../raceFeaturesCard/raceFeaturesCard.svelte";
+    import FeaturesCard from "../featuresCard/featuresCard.svelte";
     import { featuresMap } from "../../data/features.data";
     import type {RaceData} from "../../data/races.data";
     import {languagesMap} from "../../data/languages.data";
@@ -103,7 +103,7 @@
                             <span class="text-sky-400">•</span>
                             <span class="cursor-help hover:text-sky-500 transition-all">{feature}</span>
                             <Popover class="max-w-md p-3">
-                                <RaceFeaturesCard feature={featuresMap[feature] || {name: feature, description: "missing description", icon: "NoIcon"}} />
+                                <FeaturesCard feature={featuresMap[feature] || {name: feature, description: "missing description", icon: "NoIcon"}} />
                             </Popover>
                         </p>
                     {/each}

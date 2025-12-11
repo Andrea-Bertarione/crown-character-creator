@@ -1,5 +1,5 @@
 <script lang="ts">
-    import RaceFeaturesCard from "../raceFeaturesCard/raceFeaturesCard.svelte";
+    import FeaturesCard from "../featuresCard/featuresCard.svelte";
     import {characterCreationState} from "$lib/characterCreation.svelte";
     import {type FeatureData, featuresMap} from "../../data/features.data";
     import {Card} from "flowbite-svelte";
@@ -18,7 +18,7 @@
 <div class="flex flex-row flex-wrap gap-4">
     {#each raceFeaturesData as feature }
         <Card class="p-6 w-1/3">
-            <RaceFeaturesCard {feature} />
+            <FeaturesCard {feature} />
         </Card>
 
     {:else}

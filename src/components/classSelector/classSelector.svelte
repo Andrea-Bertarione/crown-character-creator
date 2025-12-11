@@ -1,7 +1,7 @@
 <script lang="ts">
     import {Modal, Button, GradientButton, Popover, Badge, Checkbox} from "flowbite-svelte";
     import { ChevronRightOutline, ChevronLeftOutline } from "flowbite-svelte-icons";
-    import RaceFeaturesCard from "../raceFeaturesCard/raceFeaturesCard.svelte";
+    import FeaturesCard from "../featuresCard/featuresCard.svelte";
     import { classesData, type ClassName } from "../../data/classes.data";
     import {featuresMap} from "../../data/features.data";
     import type { ClassChoices} from "$lib/characterCreation.svelte";
@@ -588,7 +588,7 @@
                                                         </div>
                                                     </div>
                                                     <Popover class="max-w-md p-3">
-                                                        <RaceFeaturesCard feature={featuresMap[feature.name] || {
+                                                        <FeaturesCard feature={featuresMap[feature.name] || {
                                                             name: feature.name,
                                                             description: "Feature details not found",
                                                             icon: "⭐",

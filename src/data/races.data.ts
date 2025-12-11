@@ -1,4 +1,4 @@
-export type CharacterRace = "Default" | "Human" | "Elf" | "Dwarf" | "Halfling" | "Dragonborn" | "Gnome" | "Half-Elf" | "Half-Orc" | "Tiefling" | "Aasimar" | "Bugbear" | "Goliath" | "Orc";
+export type CharacterRace = "Default" | "Human" | "Elf" | "Dwarf" | "Halfling" | "Dragonborn" | "Gnome" | "Half-Elf" | "Half-Orc" | "Tiefling" | "Aasimar" | "Bugbear" | "Goliath" | "Orc" | "Warforged";
 import type { CharacterSize, CharacterLanguage, AbilityScore} from "$lib/characterCreation.svelte";
 
 export interface SubraceData {
@@ -456,6 +456,18 @@ export const raceList: RaceData[] = [
                 description: "Orcs devoted to Gruumsh, god of war, are fierce warriors with an insatiable hunger for battle and conquest. They are the most fearsome of all orcs."
             }
         ]
+    },
+    {
+        name: "Warforged",
+        fixedModifiers: { strength: 0, dexterity: 0, constitution: 2, intelligence: 0, wisdom: 0, charisma: 0 },
+        choiceModifiers: [1],
+        features: ["Integrated Protection", "Specialized Design", "Constructed Resilience", "Sentry's Rest"],
+        size: "Medium",
+        speed: 9,
+        languages: ["Common"],
+        languageChoices: 1,
+        image: "https://www.dndbeyond.com/avatars/thumbnails/52994/778/340/340/638996059022064405.png",
+        description: "The warforged were built to fight in the Last War. The first warforged were mindless automatons, but House Cannith devoted vast resources to improving these steel soldiers. An unexpected breakthrough produced fully sentient soldiers, blending organic and inorganic materials. Warforged are made from wood and metal, but they can feel pain and emotion. Built as weapons, they must now find a purpose beyond the war. A warforged can be a steadfast ally, a cold-hearted killing machine, or a visionary in search of purpose and meaning.",
     }
 ];
 
@@ -464,3 +476,221 @@ export const racesData = Object.fromEntries(
 ) as Record<CharacterRace, RaceData>;
 
 export default racesData;
+
+export function getLanguageChoicesCount(
+    race: CharacterRace,
+    subrace?: string | null
+): number {
+    const raceData = racesData[race];
+    if (!raceData) return 0;
+
+    let choicesCount = raceData.languageChoices;
+
+    if (subrace && raceData.subraces) {
+        const subraceData = raceData.subraces.find(s => s.name === subrace);
+        if (subraceData && subraceData.languageChoices !== undefined) {
+            choicesCount += subraceData.languageChoices;
+        }
+    }
+
+    return choicesCount;
+}
+
+/**
+ * Get all known languages for a race and subrace combination
+ * @param race - The race name
+ * @param subrace - The subrace name (optional)
+ * @returns Array of known languages
+ */
+export function getKnownLanguages(
+    race: CharacterRace,
+    subrace?: string | null
+): CharacterLanguage[] {
+    const raceData = racesData[race];
+    if (!raceData) return [];
+
+    let languages = [...raceData.languages];
+
+    if (subrace && raceData.subraces) {
+        const subraceData = raceData.subraces.find(s => s.name === subrace);
+        if (subraceData && subraceData.languages) {
+            // Add subrace languages that aren't already in the list
+            languages = [...new Set([...languages, ...subraceData.languages])];
+        }
+    }
+
+    return languages;
+}
+
+/**
+ * Get all racial features (traits) for a race and subrace combination
+ * @param race - The race name
+ * @param subrace - The subrace name (optional)
+ * @returns Array of feature names
+ */
+export function getRacialFeatures(
+    race: CharacterRace,
+    subrace?: string | null
+): string[] {
+    const raceData = racesData[race];
+    if (!raceData) return [];
+
+    let features = [...raceData.features];
+
+    if (subrace && raceData.subraces) {
+        const subraceData = raceData.subraces.find(s => s.name === subrace);
+        if (subraceData) {
+            features = [...new Set([...features, ...subraceData.features])];
+        }
+    }
+
+    return features;
+}
+
+/**
+ * Get the base ability score modifiers for a race and subrace
+ * @param race - The race name
+ * @param subrace - The subrace name (optional)
+ * @returns Object with ability score modifiers
+ */
+export function getAbilityModifiers(race: CharacterRace, subrace?: string | null) {
+    const raceData = racesData[race];
+    if (!raceData) {
+        return {
+            strength: 0,
+            dexterity: 0,
+            constitution: 0,
+            intelligence: 0,
+            wisdom: 0,
+            charisma: 0
+        };
+    }
+
+    const modifiers = { ...raceData.fixedModifiers };
+
+    if (subrace && raceData.subraces) {
+        const subraceData = raceData.subraces.find(s => s.name === subrace);
+        if (subraceData && subraceData.fixedModifiers) {
+            Object.entries(subraceData.fixedModifiers).forEach(([key, value]) => {
+                modifiers[key as keyof typeof modifiers] += value;
+            });
+        }
+    }
+
+    return modifiers;
+}
+
+/**
+ * Get choice modifiers (floating ability points) for a race and subrace
+ * @param race - The race name
+ * @param subrace - The subrace name (optional)
+ * @returns Array of choice modifier values
+ */
+export function getChoiceModifiers(race: CharacterRace, subrace?: string | null): number[] {
+    const raceData = racesData[race];
+    if (!raceData) return [];
+
+    let choiceModifiers = [...raceData.choiceModifiers];
+
+    if (subrace && raceData.subraces) {
+        const subraceData = raceData.subraces.find(s => s.name === subrace);
+        if (subraceData && subraceData.choiceModifiers) {
+            choiceModifiers = [...choiceModifiers, ...subraceData.choiceModifiers];
+        }
+    }
+
+    return choiceModifiers;
+}
+
+/**
+ * Get physical attributes (size, speed, darkvision distance) for a race and subrace
+ * @param race - The race name
+ * @param subrace - The subrace name (optional)
+ * @returns Object with physical attributes
+ */
+export function getPhysicalAttributes(race: CharacterRace, subrace?: string | null) {
+    const raceData = racesData[race];
+    if (!raceData) {
+        return {
+            size: "Medium" as const,
+            speed: 9,
+            image: undefined
+        };
+    }
+
+    return {
+        size: raceData.size,
+        speed: raceData.speed,
+        image: raceData.image
+    };
+}
+
+/**
+ * Get comprehensive race information combining all data for a race and subrace
+ * @param race - The race name
+ * @param subrace - The subrace name (optional)
+ * @returns Comprehensive race info object
+ */
+export function getRaceInfo(race: CharacterRace, subrace?: string | null) {
+    const raceData = racesData[race];
+    if (!raceData) return null;
+
+    const subraceData = subrace && raceData.subraces
+        ? raceData.subraces.find(s => s.name === subrace)
+        : null;
+
+    return {
+        race: {
+            name: raceData.name,
+            description: raceData.description,
+            image: raceData.image
+        },
+        subrace: subraceData ? {
+            name: subraceData.name,
+            description: subraceData.description
+        } : null,
+        abilities: {
+            fixedModifiers: getAbilityModifiers(race, subrace),
+            choiceModifiers: getChoiceModifiers(race, subrace)
+        },
+        languages: {
+            known: getKnownLanguages(race, subrace),
+            choicesCount: getLanguageChoicesCount(race, subrace)
+        },
+        features: getRacialFeatures(race, subrace),
+        physical: getPhysicalAttributes(race, subrace)
+    };
+}
+
+/**
+ * Get all subraces for a given race
+ * @param race - The race name
+ * @returns Array of subrace names, or empty array if no subraces
+ */
+export function getSubraces(race: CharacterRace): string[] {
+    const raceData = racesData[race];
+    if (!raceData || !raceData.subraces) return [];
+    return raceData.subraces.map(s => s.name);
+}
+
+/**
+ * Check if a race has subraces
+ * @param race - The race name
+ * @returns Boolean indicating if race has subraces
+ */
+export function hasSubraces(race: CharacterRace): boolean {
+    const raceData = racesData[race];
+    return !!(raceData?.subraces && raceData.subraces.length > 0);
+}
+
+/**
+ * Get the subrace description
+ * @param race - The race name
+ * @param subrace - The subrace name
+ * @returns Subrace description or undefined
+ */
+export function getSubraceDescription(race: CharacterRace, subrace: string): string | undefined {
+    const raceData = racesData[race];
+    if (!raceData || !raceData.subraces) return undefined;
+    return raceData.subraces.find(s => s.name === subrace)?.description;
+}

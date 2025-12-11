@@ -607,3 +607,70 @@ export const proficienciesList: CharacterProficiencies = {
         state: "none",
     },
 };
+/**
+ * All available D&D 5e skill proficiencies
+ */
+export const skillProficiencies = [
+    "Acrobatics",
+    "Animal Handling",
+    "Arcana",
+    "Athletics",
+    "Deception",
+    "History",
+    "Insight",
+    "Intimidation",
+    "Investigation",
+    "Medicine",
+    "Nature",
+    "Perception",
+    "Performance",
+    "Persuasion",
+    "Religion",
+    "Sleight of Hand",
+    "Stealth",
+    "Survival"
+] as const;
+
+export const toolsProficiencies = [
+    "Alchemist's supplies",
+    "Brewer's supplies",
+    "Cartographer's tools",
+    "Cook's utensils",
+    "Glassblower's supplies",
+    "Jeweler's tools",
+    "Mason's tools",
+    "Painter's supplies",
+    "Poisoner's kit",
+    "Ranger's tools",
+    "Smith's tools",
+    "Thieves' tools",
+    "Vintner's tools"
+]
+
+export type SkillProficiency = typeof skillProficiencies[number];
+export type ToolsProficiency = typeof toolsProficiencies[number];
+
+/**
+ * Get all available skill proficiencies
+ * @returns Array of all skill proficiency names
+ */
+export function getAvailableSkillProficiencies(): SkillProficiency[] {
+    return [...skillProficiencies];
+}
+
+/**
+ * Get all available skill proficiencies
+ * @returns Array of all skill proficiency names
+ */
+export function getAvailableToolsProficiencies(): ToolsProficiency[] {
+    return [...toolsProficiencies];
+}
+
+/**
+ * Check if a skill is a valid proficiency
+ * @param skill - The skill name to check
+ * @returns Boolean indicating if the skill is valid
+ */
+export function isValidSkillProficiency(skill: string): skill is SkillProficiency {
+    return skillProficiencies.includes(skill as SkillProficiency);
+}

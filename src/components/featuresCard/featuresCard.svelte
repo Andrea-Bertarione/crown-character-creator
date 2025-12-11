@@ -99,19 +99,45 @@
                     {/if}
                     {#if modifier.type === 'resistance'}
                         <li class="text-purple-600 dark:text-purple-400">
-                            🛡️ Resistance: <span class="capitalize">{modifier.value.replace('-', ' ')}</span>
+                            🛡️ Resistance: <span class="capitalize">{typeof modifier.value === "string" ? modifier.value.replace('-', ' ') :
+                                modifier.value.hasOwnProperty("condition") ? modifier.value.condition + " with " +
+                                modifier.value.hasOwnProperty("boost") ? modifier.value.boost : "" : ""
+                        }</span>
+                        </li>
+                    {/if}
+
+                    {#if modifier.type === 'immunity'}
+                        <li class="text-purple-950 dark:text-purple-700">
+                            🛡️ Immunity: <span class="capitalize">{typeof modifier.value === "string" ? modifier.value.replace('-', ' ') :
+                            modifier.value.source ? modifier.value.source + " " +
+                                (modifier.value.type ? modifier.value.type : "") : ""
+                        }</span>
+                        </li>
+                    {/if}
+
+                    {#if modifier.type === 'ac-bonus'}
+                        <li class="text-green-600 dark:text-green-400">
+                            🛡️ Bonus to AC: <span class="capitalize">{(modifier.value >= 0 ? "+" : "-" )  + modifier.value}</span>
                         </li>
                     {/if}
 
                     {#if modifier.type === 'skill-proficiency'}
                         <li class="text-blue-600 dark:text-blue-400">
-                            📚 Skill: <span class="capitalize">{modifier.value.replace('-', ' ')}</span>
+                            📚 Skill: <span class="capitalize">{modifier.value === "choice" ? "A skill proficiency of your choice" : modifier.value.replace('-', ' ')}</span>
+                        </li>
+                    {/if}
+
+                    {#if modifier.type === 'expertise'}
+                        <li class="text-purple-800 dark:text-purple-600">
+                            📚 Expertise: <span class="capitalize">{modifier.value === "choice" ? "A skill expertise of your choice" : modifier.value.replace('-', ' ')}</span>
                         </li>
                     {/if}
 
                     {#if modifier.type === 'saving-throw'}
                         <li class="text-teal-400 dark:text-teal-200">
-                            📚 Saving throw: <span class="capitalize">{modifier.value.type}</span> on {modifier.value.source.replace('-', ' ')}
+                            📚 Saving throw: <span class="capitalize">{modifier.value.boost} on {modifier.value.source.replace('-', ' ') +
+                                (modifier.value.type ? " " + modifier.value.type : "")
+                            } </span>
                         </li>
                     {/if}
 
@@ -133,7 +159,7 @@
 
                     {#if modifier.type === 'tool-proficiency'}
                         <li class="text-yellow-600 dark:text-yellow-400">
-                            🔧 <span class="capitalize">{modifier.value}</span>
+                            🔧 Tool: <span class="capitalize">{modifier.value === "choice" ? "A tool proficiency of your choice" : modifier.value.replace('-', ' ')}</span>
                         </li>
                     {/if}
 

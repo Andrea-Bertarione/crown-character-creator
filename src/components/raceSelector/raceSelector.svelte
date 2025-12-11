@@ -1,7 +1,7 @@
 <script lang="ts">
     import {Modal, Button, GradientButton, Popover, Label} from "flowbite-svelte";
     import { ChevronRightOutline, ChevronLeftOutline } from "flowbite-svelte-icons";
-    import RaceFeaturesCard from "../raceFeaturesCard/raceFeaturesCard.svelte";
+    import FeaturesCard from "../featuresCard/featuresCard.svelte";
     import racesData, { raceList, type CharacterRace } from "../../data/races.data";
     import {featuresMap} from "../../data/features.data";
 
@@ -208,7 +208,7 @@
                                                 <span class="text-sky-400">•</span>
                                                 <span class="cursor-help hover:text-sky-500 transition-all">{feature}</span>
                                                 <Popover class="max-w-md p-3">
-                                                    <RaceFeaturesCard feature={featuresMap[feature] || {name: feature, description: "missing description", icon: "NoIcon"}} />
+                                                    <FeaturesCard feature={featuresMap[feature] || {name: feature, description: "missing description", icon: "NoIcon"}} />
                                                 </Popover>
                                             </p>
                                         {/each}
@@ -284,7 +284,7 @@
                                                 <span class="text-sky-400">•</span>
                                                 <span class="cursor-help hover:text-sky-500 transition-all">{feature}</span>
                                                 <Popover class="max-w-md p-3">
-                                                    <RaceFeaturesCard feature={featuresMap[feature] || {name: feature, description: "missing description", icon: "NoIcon"}} />
+                                                    <FeaturesCard feature={featuresMap[feature] || {name: feature, description: "missing description", icon: "NoIcon"}} />
                                                 </Popover>
                                             </p>
                                         {/each}

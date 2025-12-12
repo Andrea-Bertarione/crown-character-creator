@@ -2,7 +2,7 @@ import {v4 as uuidv4} from "uuid";
 import {featuresMap} from "../data/features.data";
 import {type CharacterProficiencies, proficienciesList} from "../data/proficiencies.data";
 import {type CharacterRace, type RaceData, racesData} from "../data/races.data";
-import { classesData, type ClassName } from "../data/classes.data";
+import {classesData, type ClassName} from "../data/classes.data";
 
 export type AbilityScore = "strength" | "dexterity" | "constitution" | "wisdom" | "intelligence" | "charisma";
 export type CharacterSize = "Small" | "Medium" | "Large" | "Huge";
@@ -360,6 +360,89 @@ export class Character {
 
     removeSpellChoice = (choiceId: string) => {
         delete this.selectedSpells[choiceId];
+    }
+
+    syncFromSelectionState = (selectionData: {
+        race?: CharacterRace;
+        subrace?: string | null;
+        class?: ClassName | null;
+        subclass?: string | null;
+        languages?: CharacterLanguage[];
+        proficiencies?: string[];
+        feats?: string[];
+    }) => {
+        // 🔴 RACE: Most cascading impact
+        if (selectionData.race && selectionData.race !== "Default") {
+            // If race changed, reset everything that depends on it
+            if (this.race !== selectionData.race) {
+                this.race = selectionData.race;
+                this.subrace = null;  // Reset subrace
+                this.languagesChoices = [];  // Reset language choices
+                this.manualProficiencies = {};  // Reset manual proficiencies
+                this.actives = [];  // Reset feats/active abilities
+                // Keep ability scores since user manually set them
+            } else {
+                this.race = selectionData.race;
+            }
+        }
+
+        // 🟠 SUBRACE: Less impact than race but still cascades
+        if (selectionData.subrace !== undefined) {
+            // If subrace changed, reset dependent choices
+            if (this.subrace !== selectionData.subrace) {
+                this.subrace = selectionData.subrace;
+                this.languagesChoices = [];  // Subrace might have different language options
+                this.manualProficiencies = {};  // Reset proficiencies
+                this.actives = [];  // Reset feats
+            } else {
+                this.subrace = selectionData.subrace;
+            }
+        }
+
+        // 🟡 CLASS: No cascading reset needed usually
+        if (selectionData.class) {
+            // If class changed, might want to reset subclass
+            if (this.class !== selectionData.class) {
+                this.class = selectionData.class;
+                this.subClass = null;  // Reset subclass if class changes
+            } else {
+                this.class = selectionData.class;
+            }
+        }
+
+        // 🟢 SUBCLASS: Leaf node, no cascading
+        if (selectionData.subclass !== undefined) {
+            this.subClass = selectionData.subclass;
+        }
+
+        // 🔵 LANGUAGES: Non-cascading, but clear before appending to avoid dupes
+        if (selectionData.languages && selectionData.languages.length > 0) {
+            // Only add languages that aren't already in choices
+            selectionData.languages.forEach(lang => {
+                if (!this.languagesChoices.includes(lang)) {
+                    this.languagesChoices.push(lang);
+                }
+            });
+        }
+
+        // 🔵 PROFICIENCIES: Non-cascading, additive
+        if (selectionData.proficiencies && selectionData.proficiencies.length > 0) {
+            selectionData.proficiencies.forEach(prof => {
+                // Only set if not already set by race features
+                if (!(prof in this.manualProficiencies)) {
+                    this.manualProficiencies[prof] = "proficiency";
+                }
+            });
+        }
+
+        // 🔵 FEATS: Non-cascading, additive
+        if (selectionData.feats && selectionData.feats.length > 0) {
+            selectionData.feats.forEach(feat => {
+                if (!this.actives.includes(feat)) {
+                    this.actives.push(feat);
+                }
+            });
+        }
     }
 
     reset = () => {

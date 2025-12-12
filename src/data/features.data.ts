@@ -721,11 +721,11 @@ export const featuresMap: {[key: string]: FeatureData} = {
                 value: {
                     name: 'Stone\'s Endurance',
                     reductionDice: '1d12 + Con',
-                    resources: [
-                        { type: 'reaction', cost: 1 }
-                    ]
                 }
             }
+        ],
+        resources: [
+            { type: 'reaction', cost: 1 }
         ]
     },
     ["Mountain Born"]: {
@@ -1025,7 +1025,7 @@ export const featuresMap: {[key: string]: FeatureData} = {
     // ==================== BARD FEATURES ====================
     ["Bardic Inspiration die"]: {
         name: 'Bardic Inspiration die',
-        description: 'Your Bardic Inspiration die pool that is equal to your Charisma modifier(minimum 1). The die becomes a d8 at 5th level, a d10 at 10th level, and a d12 at 15th level.',
+        description: 'Your Bardic Inspiration die(d6s) pool that is equal to your Charisma modifier(minimum 1). The die becomes a d8 at 5th level, a d10 at 10th level, and a d12 at 15th level.',
         icon: "🎵",
         frequency: "per-long-rest",
         type: 'passive',
@@ -1044,7 +1044,16 @@ export const featuresMap: {[key: string]: FeatureData} = {
         description: 'You can inspire others through stirring words or music. Other creatures that can hear you within 18 meters gain a Bardic Inspiration die.',
         icon: "🎵",
         type: 'active',
+        modifiers: [
+            {
+                type: "action", value: {
+                    name: 'Bardic Inspiration',
+                    buff: {use: 1, choice: ["attack", "save", "skill"], when: "post-roll", target: ["ally"], increment: "Bardic Inspiration die"},
+                }
+            }
+        ],
         resources: [
+            { type: 'bonus-action', cost: 1},
             { type: 'bardic-inspiration', cost: 1, description: 'Grant d6' }
         ]
     },
@@ -1363,7 +1372,10 @@ export const featuresMap: {[key: string]: FeatureData} = {
         description: 'You have a limited well of stamina that you can draw on to protect yourself from harm. On your turn, you can use a bonus action to regain hit points equal to 1d10 + your fighter level.',
         icon: "💨",
         type: 'active',
-        frequency: 'per-long-rest',
+        frequency: 'per-short-rest',
+        modifiers: [
+            { type: "action", value: { type: "heal", amount: "1d10 + fighter_level", target: "self"}, description: "Heal for 1d10 + fighter level" }
+        ],
         resources: [
             { type: 'bonus-action', cost: 1 }
         ]

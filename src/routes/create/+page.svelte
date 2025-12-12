@@ -20,178 +20,29 @@
         raceList
     } from "../../data/races.data";
     import {ChevronRightOutline} from "flowbite-svelte-icons";
-    import {classesData} from "../../data/classes.data";
+    import {classesData, type ClassName} from "../../data/classes.data";
     import {featuresMap} from "../../data/features.data";
 
-    interface Step {
-        name: string;
-        header: string,
-        subheader: string,
-        side: string[],
-        confirm: string
-    }
+    //imported states
+    import {CharacterCreationManager} from "$lib/characterCreationManager.svelte";
 
-    interface AdditionalChoicesRaceSubState {
-        Languages?: CharacterLanguage[],
-        Proficiency?: string[],
-        Feat?: string[]
-    }
+    const manager = new CharacterCreationManager({
+        racesData: racesData,
+        classesData: classesData,
+        featuresMap: featuresMap,
+        raceList
+    });
 
     // States
     let showCreationModal = $state(false);
     let showSelectorModal = $state(false);
-
     let selectedSide = $state(0);
-    let tempChoices: {[key: string]: string } & {Race: CharacterRace} = $state({
-        Race: "Default",
-        Subrace: "",
-        AdditionalChanges: "",
-        Class: ""
-    });
 
-    let additionalChoicesRaceSubState: {[key: string]: any[] } & AdditionalChoicesRaceSubState = $state({
-        Languages: [],
-        Proficiency: [],
-        Feat: []
-    });
-
-    let proficienciesTabRaceState: string[] = $derived.by(() => {
-        const tabsProf: string[] = [];
-
-        if (tempChoices.Race === "Default") return tabsProf;
-
-        const confirmedRace = racesData[tempChoices.Race as CharacterRace];
-        if (!confirmedRace) return tabsProf;
-
-        const features = confirmedRace.features;
-        for (const raceFeature of features) {
-            const featureData = featuresMap[raceFeature];
-            if (!featureData) continue;
-
-            for (const modifier of featureData.modifiers || []) {
-                if (modifier.value === "choice") {
-                    const isProficiency = modifier.type.includes("proficiency") ? "proficiency" : modifier.type;
-                    if (isProficiency === "proficiency" && !tabsProf.includes(modifier.type.split("-")[0])) {
-                        tabsProf.push(modifier.type.split("-")[0]);
-                    }
-                }
-            }
-        }
-
-        if (tempChoices["Subrace"]) {
-            const confirmedSubRace = confirmedRace.subraces?.find(sub => sub.name === tempChoices["Subrace"]);
-            const featuresSub = confirmedSubRace?.features || [];
-
-            for (const raceSubFeature of featuresSub) {
-                const featureData = featuresMap[raceSubFeature];
-                if (!featureData) continue;
-
-                for (const modifier of featureData.modifiers || []) {
-                    if (modifier.value === "choice") {
-                        const isProficiency = modifier.type.includes("proficiency") ? "proficiency" : modifier.type;
-                        if (isProficiency === "proficiency" && !tabsProf.includes(modifier.type.split("-")[0])) {
-                            tabsProf.push(modifier.type.split("-")[0]);
-                        }
-                    }
-                }
-            }
-        }
-
-        return tabsProf;
-    });
 
     let proficienciesAvailables: {[key: string]: () => string[]} = {
         skill: getAvailableSkillProficiencies,
         tool: getAvailableToolsProficiencies,
     }
-
-    const stepsData: Step[] = $derived.by(() => {
-        // set race selection as default step 1
-        const stepsArray = [
-            {
-                name: "Race",
-                header: "Select a Race",
-                subheader: "Choose a race for your character. Each race grants different ability score increases, features, and languages.",
-                side: raceList.map((race) => race.name as string),
-                confirm: "Select race"
-            },
-        ];
-
-        if (tempChoices.Race === "Default") { return stepsArray; }
-
-        //has race been selected
-        const confirmedRace = racesData[tempChoices.Race as CharacterRace];
-        let hasSubrace = false;
-        if (confirmedRace && confirmedRace.subraces && confirmedRace.subraces.length > 0) {
-            hasSubrace = true;
-            stepsArray.push({
-                name: "Subrace",
-                header: "Select a Sub-Race" ,
-                subheader: "Select a subrace to customize your character further.",
-                side: confirmedRace.subraces.map(subrace => subrace.name as string),
-                confirm: "Select subrace"
-            });
-        }
-
-        stepsArray.push({
-            name: "Class",
-            header: "Select a Class",
-            subheader: "Choose a class for your character. Each class determines your abilities, proficiencies, and combat style.",
-            side: Object.keys(classesData),
-            confirm: "Select a Class"
-        });
-
-        //additional choices
-        const additionalChoicesRes: Step = {
-            name: "AdditionalChanges",
-            header: "Select additional choices and features",
-            subheader: "Select additional choices and features for your character.",
-            side: [],
-            confirm: "Confirm choices"
-        }
-        if (confirmedRace) {
-            const hasLanguageChoice = confirmedRace.languageChoices > 0 ? additionalChoicesRes.side.push("Languages") ? true : true : false;
-            const features = confirmedRace.features;
-            for (const raceFeature of features) {
-                const featureData = featuresMap[raceFeature];
-
-                if (!featureData) { continue; }
-
-                for (const modifier of featureData.modifiers || []) {
-                    if (modifier.value === "choice") {
-                        const isProficiency = modifier.type.includes("proficiency") ? "proficiency" : modifier.type;
-                        additionalChoicesRes.side.indexOf(isProficiency as string) === -1 ? additionalChoicesRes.side.push(isProficiency) : null;
-                    }
-                }
-            }
-
-            if (hasSubrace) {
-                const confirmedSubRace = confirmedRace.subraces!.find(sub => sub.name === tempChoices["Subrace"]);
-                hasLanguageChoice ? null : (confirmedSubRace?.languageChoices || 0) > 0 ? additionalChoicesRes.side.push("Languages") : null;
-
-                const featuresSub = confirmedSubRace?.features || [];
-
-                for (const raceSubFeature of featuresSub) {
-                    const featureData = featuresMap[raceSubFeature];
-
-                    if (!featureData) { continue; }
-
-                    for (const modifier of featureData.modifiers || []) {
-                        if (modifier.value === "choice") {
-                            const isProficiency = modifier.type.includes("proficiency") ? "proficiency" : modifier.type;
-                            additionalChoicesRes.side.indexOf(isProficiency as string) === -1 ? additionalChoicesRes.side.push(isProficiency) : null;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (additionalChoicesRes.side.length > 0) {
-            stepsArray.push(additionalChoicesRes);
-        }
-
-        return stepsArray;
-    });
 
     const getSelectedCount =(
         choiceCategory: string,
@@ -204,7 +55,8 @@
     const getMaxCount = (
         choiceCategory: string,
         race?: CharacterRace,
-        subrace?: string | null
+        subrace?: string | null,
+        selectedClass?: string
     ): number => {
         const normalized = choiceCategory
             .toLowerCase()
@@ -216,26 +68,32 @@
                 return race ? getLanguageChoicesCount(race, subrace) : 0;
 
             case "skill": {
-                if (!race) return 0;
-
-                // Collect all racial + subracial features
-                const features = getRacialFeatures(race, subrace);
-
-                // Count how many modifiers of type "skill-proficiency" with value "choice"
-                // e.g. Half-Elf "Skill Versatility" gives 2 such modifiers.
+                // FIX: Check both race AND class for skill choices
                 let maxChoices = 0;
 
-                for (const featureName of features) {
-                    const featureData = featuresMap[featureName];
-                    if (!featureData || !featureData.modifiers) continue;
+                // Add race skill choices
+                if (race) {
+                    const features = getRacialFeatures(race, subrace);
+                    for (const featureName of features) {
+                        const featureData = featuresMap[featureName];
+                        if (!featureData || !featureData.modifiers) continue;
 
-                    for (const mod of featureData.modifiers) {
-                        if (
-                            (mod.type === "skill-proficiency" &&
-                            mod.value === "choice")
-                        ) {
-                            maxChoices += 1;
+                        for (const mod of featureData.modifiers) {
+                            if (
+                                (mod.type === "skill-proficiency" &&
+                                    mod.value === "choice")
+                            ) {
+                                maxChoices += 1;
+                            }
                         }
+                    }
+                }
+
+                // Add class skill choices (this is the main source for most classes)
+                if (selectedClass) {
+                    const classData = classesData[selectedClass as ClassName];
+                    if (classData && classData.skillChoices) {
+                        maxChoices += classData.skillChoices;
                     }
                 }
 
@@ -243,26 +101,32 @@
             }
 
             case "tool": {
-                if (!race) return 0;
-
-                // Collect all racial + subracial features
-                const features = getRacialFeatures(race, subrace);
-
-                // Count how many modifiers of type "skill-proficiency" with value "choice"
-                // e.g. Half-Elf "Skill Versatility" gives 2 such modifiers.
+                // FIX: Check both race AND class for tool choices
                 let maxChoices = 0;
 
-                for (const featureName of features) {
-                    const featureData = featuresMap[featureName];
-                    if (!featureData || !featureData.modifiers) continue;
+                // Add race tool choices
+                if (race) {
+                    const features = getRacialFeatures(race, subrace);
+                    for (const featureName of features) {
+                        const featureData = featuresMap[featureName];
+                        if (!featureData || !featureData.modifiers) continue;
 
-                    for (const mod of featureData.modifiers) {
-                        if (
-                            (mod.type === "tool-proficiency" &&
-                                mod.value === "choice")
-                        ) {
-                            maxChoices += 1;
+                        for (const mod of featureData.modifiers) {
+                            if (
+                                (mod.type === "tool-proficiency" &&
+                                    mod.value === "choice")
+                            ) {
+                                maxChoices += 1;
+                            }
                         }
+                    }
+                }
+
+                // Add class tool choices
+                if (selectedClass) {
+                    const classData = classesData[selectedClass as ClassName];
+                    if (classData && classData.toolChoices) {
+                        maxChoices += classData.toolChoices;
                     }
                 }
 
@@ -281,32 +145,100 @@
     };
 
     const getSelectedCountByTab = (proficiencyTab: string): number => {
-        const allSelected = additionalChoicesRaceSubState["Proficiency"] || [];
+        const allSelected = manager.additionalChoicesRaceSubState["Proficiency"] || [];
         const available = proficienciesAvailables[proficiencyTab]();
         return allSelected.filter(p => available.includes(p)).length;
+    };
+
+    /**
+     * Syncs the appropriate temp state to character based on which step was completed
+     */
+    const syncCharacterFromStep = (stepName: string) => {
+        switch(stepName) {
+            case "Race":
+                // Race is the root - clear dependent choices too
+                characterCreationState.syncFromSelectionState({
+                    race: manager.tempChoices.Race as CharacterRace
+                });
+                // Clear temp state for dependent steps
+                manager.tempChoices.Subrace = "";
+                manager.tempChoices.Class = "";
+                manager.tempChoices.Subclass = "";
+                manager.additionalChoicesRaceSubState.Languages = [];
+                manager.additionalChoicesRaceSubState.Proficiency = [];
+                manager.additionalChoicesRaceSubState.Feat = [];
+
+                break;
+
+            case "Subrace":
+                characterCreationState.syncFromSelectionState({
+                    subrace: manager.tempChoices.Subrace || null
+                });
+                // Clear temp state for dependent steps
+                manager.tempChoices.Class = "";
+                manager.tempChoices.Subclass = "";
+                manager.additionalChoicesRaceSubState.Languages = [];
+                manager.additionalChoicesRaceSubState.Proficiency = [];
+                manager.additionalChoicesRaceSubState.Feat = [];
+
+                break;
+
+            case "Class":
+                characterCreationState.syncFromSelectionState({
+                    class: manager.tempChoices.Class as ClassName
+                });
+                // Clear subclass if class changed
+                manager.tempChoices.Subclass = "";
+                // Clear additional choices since proficiencies might change
+                manager.additionalChoicesRaceSubState.Languages = [];
+                manager.additionalChoicesRaceSubState.Proficiency = [];
+                manager.additionalChoicesRaceSubState.Feat = [];
+
+                break;
+
+            case "Subclass":
+                characterCreationState.syncFromSelectionState({
+                    subclass: manager.tempChoices.Subclass || null
+                });
+                // Clear additional choices in case subclass changes what's available
+                manager.additionalChoicesRaceSubState.Languages = [];
+                manager.additionalChoicesRaceSubState.Proficiency = [];
+                manager.additionalChoicesRaceSubState.Feat = [];
+
+                break;
+
+            case "AdditionalChanges":
+                characterCreationState.syncFromSelectionState({
+                    languages: manager.additionalChoicesRaceSubState.Languages,
+                    proficiencies: manager.additionalChoicesRaceSubState.Proficiency,
+                    feats: manager.additionalChoicesRaceSubState.Feat
+                });
+                // Keep temp state - don't reset it yet, user might go back
+                break;
+        }
     };
 
 </script>
 
 <Header />
 <div class="flex flex-col items-center justify-center relative">
-        <button
-                onclick={() => {
+    <button
+            onclick={() => {
                     showCreationModal = true;
                     showSelectorModal = true;
                     characterCreationState.reset();
                 }}
-                class="mt-30 w-full max-w-md mx-auto flex flex-col items-center justify-center gap-6 p-12 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-dashed border-primary/40 hover:border-primary/60 hover:dark:border-white transition-all group cursor-pointer"
-        >
-            <div class="text-7xl font-light text-primary/60 group-hover:dark:text-white group-hover:scale-110 transition-all">
-                +
-            </div>
-            <div class="text-center">
-                <h2 class="text-2xl font-bold dark:text-white mb-2">Create your first Character</h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Begin your adventure by creating a new hero</p>
-            </div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 mt-2 group-hover:scale-150 group-hover:dark:text-white group-hover:font-bold transition-all">Click to start</div>
-        </button>
+            class="mt-30 w-full max-w-md mx-auto flex flex-col items-center justify-center gap-6 p-12 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-dashed border-primary/40 hover:border-primary/60 hover:dark:border-white transition-all group cursor-pointer"
+    >
+        <div class="text-7xl font-light text-primary/60 group-hover:dark:text-white group-hover:scale-110 transition-all">
+            +
+        </div>
+        <div class="text-center">
+            <h2 class="text-2xl font-bold dark:text-white mb-2">Create your first Character</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Begin your adventure by creating a new hero</p>
+        </div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-2 group-hover:scale-150 group-hover:dark:text-white group-hover:font-bold transition-all">Click to start</div>
+    </button>
 </div>
 
 {#if showCreationModal}
@@ -363,14 +295,14 @@
         <GradientButton type="submit">Create</GradientButton>
     </Modal>
 
-    <SelectorComp bind:isOpen={showSelectorModal} bind:selectedSide={selectedSide} numberOfSteps={3}  >
+    <SelectorComp bind:isOpen={showSelectorModal} bind:selectedSide={selectedSide} numberOfSteps={manager.stepsData.length}  >
         {#snippet headers(currentStep)}
-            {@const stepInfo = stepsData[currentStep]}
-        	<p>{stepInfo ? stepInfo.header : "No header found"}</p>
+            {@const stepInfo = manager.stepsData[currentStep]}
+            <p>{stepInfo ? stepInfo.header : "No header found"}</p>
             <p class="text-gray-400 text-sm mt-1">{stepInfo ? stepInfo.subheader : "No SubHeader found"}</p>
         {/snippet}
         {#snippet side(currentStep)}
-            {@const stepInfo = stepsData[currentStep]}
+            {@const stepInfo = manager.stepsData[currentStep]}
             {#if stepInfo}
                 {#each stepInfo.side || Array<String>(0) as sideData, i}
                     <button
@@ -385,13 +317,13 @@
                             <span class="font-medium capitalize">{sideData.replaceAll("-", " ")}</span>
                             {#if stepInfo.name === "AdditionalChanges"}
                                 <Badge color="blue" class="px-2 py-0 text-xs">
-                                    {sideData === "proficiency" ?
-                                        proficienciesTabRaceState.reduce((sum, tab) => sum + getSelectedCountByTab(tab), 0):
-                                        getSelectedCount(sideData, additionalChoicesRaceSubState[sideData])}
+                                    {sideData === "skill" || sideData === "tool" ?
+                                        getSelectedCount(sideData, manager.additionalChoicesRaceSubState["Proficiency"]):
+                                        getSelectedCount(sideData, manager.additionalChoicesRaceSubState[sideData])}
                                     /
-                                    {sideData === "proficiency" ?
-                                        proficienciesTabRaceState.map(proficiencyTab => getMaxCount(proficiencyTab, tempChoices["Race"], tempChoices["Subrace"])).reduce((a, b) => a + b, 0):
-                                        getMaxCount(sideData, tempChoices["Race"], tempChoices["Subrace"])}
+                                    {sideData === "skill" || sideData === "tool" ?
+                                        getMaxCount(sideData, manager.tempChoices["Race"], manager.tempChoices["Subrace"], manager.tempChoices["Class"]):
+                                        getMaxCount(sideData, manager.tempChoices["Race"], manager.tempChoices["Subrace"])}
                                 </Badge>
                             {/if}
                             <ChevronRightOutline class="w-4 h-4 text-gray-500" />
@@ -401,44 +333,48 @@
             {/if}
         {/snippet}
         {#snippet steps(i)}
-            {@const stepInfo = stepsData[i]}
+            {@const stepInfo = manager.stepsData[i]}
             {#if stepInfo && stepInfo.name === "Race"}
                 <RaceDetails currentRace={raceList[selectedSide]} />
             {/if}
             {#if stepInfo && stepInfo.name === "Subrace"}
-                {@const race = raceList.find(race => race.name === tempChoices["Race"])}
+                {@const race = raceList.find(race => race.name === manager.tempChoices["Race"])}
                 <SubraceDetails currentSubrace={!race || !race.subraces ? undefined : race.subraces[selectedSide] } />
             {/if}
             {#if stepInfo && stepInfo.name === "AdditionalChanges"}
                 {#if stepInfo.side[selectedSide] === "Languages"}
-                    <LanguagesComp knownLanguages={getKnownLanguages(tempChoices["Race"], tempChoices["Subrace"] || "")}
-                                   bind:languageChoices={additionalChoicesRaceSubState["Languages"]}
-                                   languageChoicesCount={getLanguageChoicesCount(tempChoices["Race"], tempChoices["Subrace"] || "")}
+                    <LanguagesComp knownLanguages={getKnownLanguages(manager.tempChoices["Race"], manager.tempChoices["Subrace"] || "")}
+                                   bind:languageChoices={manager.additionalChoicesRaceSubState["Languages"]}
+                                   languageChoicesCount={getLanguageChoicesCount(manager.tempChoices["Race"], manager.tempChoices["Subrace"] || "")}
                     />
                 {/if}
-                {#if stepInfo.side[selectedSide] === "proficiency"}
+                {#if stepInfo.side[selectedSide] === "skill" || stepInfo.side[selectedSide] === "tool"}
                     <Tabs classes={{ active: "p-4 text-white bg-sky-800 rounded-t-lg dark:bg-sky-600 dark:text-white" }}>
-                        {#each proficienciesTabRaceState as proficiencyTab, i}
-                            {@const availableProficiencies = proficienciesAvailables[proficiencyTab]}
-                            {#if availableProficiencies}
-                                <TabItem open={i === 0} title={proficiencyTab + "s"}>
-                                    <ProficienciesComp
-                                            bind:selectedProficiencies={additionalChoicesRaceSubState["Proficiency"]}
-                                            availableProficiencies={availableProficiencies()}
-                                            maxSelections={getMaxCount(proficiencyTab, tempChoices["Race"], tempChoices["Subrace"])}
-                                    />
-                                </TabItem>
-                            {:else}
-                                Warn no proficiencies available for {proficiencyTab}
-                            {/if}
-                        {/each}
+                        {#if stepInfo.side[selectedSide] === "skill"}
+                            <TabItem open title="Skills">
+                                <ProficienciesComp
+                                        bind:selectedProficiencies={manager.additionalChoicesRaceSubState["Proficiency"]}
+                                        availableProficiencies={getAvailableSkillProficiencies()}
+                                        maxSelections={getMaxCount("skill", manager.tempChoices["Race"], manager.tempChoices["Subrace"], manager.tempChoices["Class"])}
+                                />
+                            </TabItem>
+                        {/if}
+                        {#if stepInfo.side[selectedSide] === "tool"}
+                            <TabItem open title="Tools">
+                                <ProficienciesComp
+                                        bind:selectedProficiencies={manager.additionalChoicesRaceSubState["Proficiency"]}
+                                        availableProficiencies={getAvailableToolsProficiencies()}
+                                        maxSelections={getMaxCount("tool", manager.tempChoices["Race"], manager.tempChoices["Subrace"], manager.tempChoices["Class"])}
+                                />
+                            </TabItem>
+                        {/if}
                     </Tabs>
                 {/if}
                 {#if stepInfo.side[selectedSide] === "feat"}
                     <FeatComp
                             character={characterCreationState}
-                            bind:selectedFeats={additionalChoicesRaceSubState["Feat"]}
-                            maxFeats={getMaxCount("feat", tempChoices["Race"], tempChoices["Subrace"])}
+                            bind:selectedFeats={manager.additionalChoicesRaceSubState["Feat"]}
+                            maxFeats={getMaxCount("feat", manager.tempChoices["Race"], manager.tempChoices["Subrace"])}
                             featDescription={featsData}
                     />
                 {/if}
@@ -448,16 +384,25 @@
             {/if}
         {/snippet}
         {#snippet actions(currentStep, nextStep, previousStep)}
-            {@const stepInfo = stepsData[currentStep]}
+            {@const stepInfo = manager.stepsData[currentStep]}
             <GradientButton
                     onclick={() => {
-                       if (!stepInfo) return;
+               if (!stepInfo) return;
 
-                       tempChoices[stepInfo.name] = stepInfo.side[selectedSide];
-                       selectedSide = 0;
+               // Store the selection
+               manager.tempChoices[stepInfo.name] = stepInfo.side[selectedSide];
 
-                       nextStep();
-                    }}
+               // 🔑 NEW: Sync to character state based on step type
+               syncCharacterFromStep(stepInfo.name);
+
+               // FIX: Close modal after final step (AdditionalChanges)
+               if (stepInfo.name === "AdditionalChanges") {
+                   showSelectorModal = false;
+               } else {
+                   selectedSide = 0;
+                   nextStep();
+               }
+            }}
             >
                 {(stepInfo && stepInfo.confirm) || "confirm selection"}
             </GradientButton>

@@ -12,16 +12,14 @@
         modifiers?.find(m => m.type === "action")?.value
     );
 
-    let resources = $derived.by(() => {
-        if (!action?.resources) return [];
-        return action.resources as ActionResource[];
-    });
+    let resources = $derived(feature.resources || []);
 
     let resourceLabels: Record<string, string> = {
         'action': '⚡ Action',
         'bonus-action': '✨ Bonus Action',
         'reaction': '🔄 Reaction',
-        'movement': '💨 Movement'
+        'movement': '💨 Movement',
+        'bardic-inspiration': '🎵 Bardic Inspiration Die'
     };
 
     let typeColors: Record<string, string> = {
@@ -91,10 +89,18 @@
                 {#each modifiers as modifier}
                     {#if modifier.type === 'action'}
                         <li class="text-sky-600 dark:text-sky-400">
+                            {modifier.value.buff ? "⬆️ " +
+                                (modifier.value.buff.when || "post-roll" ? "After you fail one of these (" + modifier.value.buff.choice.join(", ") + ") rolls" : "") +
+                                " you can choose to add +(" + modifier.value.buff.increment + ") to the roll possibly making it succeed."
+                                : ""}
                             {modifier.value.reductionDice ? "🛡 " + modifier.value.reductionDice + " damage reduction" : ""}
                             {modifier.value.damageDice ? "⚔️ " + modifier.value.damageDice + " " + modifier.value.damageType + " damage" : ""}
                             {modifier.value.area ? "in an area of " + modifier.value.area : ""}
                             {modifier.value.origin === "self" ? "around yourself" : ""}
+                            {modifier.value.type === "heal" ? "heal " : "" }
+                            {modifier.value.type === "damage" ? "damage " : "" }
+                            {modifier.value.target === "self" ? "yourself " : ""}
+                            {modifier.value.amount ? "by " + modifier.value.amount : ""}
                         </li>
                         <span>{modifier.value.save ? "Targets do a " + modifier.value.save + " saving throw against (" + modifier.value.cd + ")" : ""}</span>
                     {/if}

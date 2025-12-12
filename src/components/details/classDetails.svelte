@@ -1,5 +1,8 @@
 <script lang="ts">
+    import {Popover} from "flowbite-svelte";
     import type {ClassData} from "../../data/classes.data";
+    import {featuresMap} from "../../data/features.data";
+    import FeaturesCard from "../featuresCard/featuresCard.svelte";
 
     let { currentClass }: { currentClass?: ClassData } = $props<{ currentClass?: ClassData }>();
 </script>
@@ -13,20 +16,6 @@
                 {currentClass.description}
             </p>
         </div>
-
-        <!-- Subclass Availability Notice -->
-        {#if currentClass.subclasses && currentClass.subclasses.length > 0}
-            <div class="bg-blue-500 bg-opacity-20 border border-blue-500 rounded-lg p-3">
-                <p class="text-sm text-gray-100">
-                    <span class="font-bold">Subclass Available at Level {currentClass.subclassLevel}</span>
-                    {#if currentClass.subclassLevel === 1}
-                        <span> — Choose your specialization now</span>
-                    {:else}
-                        <span> — You'll choose your specialization later</span>
-                    {/if}
-                </p>
-            </div>
-        {/if}
 
         <!-- Hit Dice + HP -->
         <div class="grid grid-cols-3 gap-4">
@@ -44,6 +33,22 @@
                     <p class="text-sm font-bold text-white capitalize">{currentClass.spellcastingAbility}</p>
                 </div>
             {/if}
+        </div>
+
+        <!-- Features info -->
+        <div class="z-10">
+            <p class="text-xs text-gray-400 mb-3 font-semibold uppercase tracking-wide">Class Features</p>
+            <div class="space-y-2">
+                {#each currentClass.classFeatures.filter(v => v.level === 1) as classFeature}
+                    <p class="text-sm text-gray-300 flex gap-2">
+                        <span class="text-sky-400">•</span>
+                        <span class="cursor-help hover:text-sky-500 transition-all">{classFeature.name} - {classFeature.description}</span>
+                        <Popover class="max-w-md p-3">
+                            <FeaturesCard feature={featuresMap[classFeature.name] || {name: classFeature.name, description: "missing description", icon: "NoIcon"}} />
+                        </Popover>
+                    </p>
+                {/each}
+            </div>
         </div>
 
         <!-- Armor Proficiencies -->
@@ -107,10 +112,10 @@
             <div>
                 <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wide">Skill Proficiencies</p>
                 <p class="text-sm text-gray-300">
-                    Choose <span class="font-bold text-sky-400">{currentClass.skillChoices}</span> skills from:
+                    You will choose <span class="font-bold text-sky-400">{currentClass.skillChoices}</span> skills between these:
                 </p>
                 <div class="mt-2 flex gap-2 flex-wrap">
-                    {#each currentClass.skillProficiencies as skill}
+                    {#each currentClass.SkillProficiencyList as skill}
                                             <span class="px-2 py-1 bg-gray-700 text-gray-200 rounded text-xs">
                                                 {skill}
                                             </span>
@@ -119,19 +124,31 @@
             </div>
         {/if}
 
-        <!-- Spellcasting Info -->
-        {#if ((currentClass.spellsKnownAtLevel1 || 0) > 0 || (currentClass.cantripsKnownAtLevel1 || 0) > 0) && currentClass.spellcastingAbility}
-            <div class="bg-purple-500 bg-opacity-20 border border-purple-500 rounded-lg p-3">
-                <p class="text-sm text-gray-100">
-                    <span class="font-bold">Spellcasting:</span>
-                    {#if (currentClass.cantripsKnownAtLevel1 || 0) > 0}
-                        <span> {currentClass.cantripsKnownAtLevel1} cantrips</span>
-                    {/if}
-                    {#if (currentClass.spellsKnownAtLevel1 || 0)> 0}
-                        <span> + {currentClass.spellsKnownAtLevel1} spells</span>
-                    {/if}
-                    <span> (You'll choose in the next step)</span>
-                </p>
+        {#if currentClass.toolChoices > 0 || currentClass.toolProficiencies.length > 0}
+            <div>
+                <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wide">Tools Proficiencies</p>
+                {#if currentClass.toolProficiencies.length > 0 }
+                    <p class="text-sm text-gray-300">
+                        You are proficient in these tools:
+                    </p>
+                    {#each currentClass.toolProficiencies as tool}
+                        <span class="px-3 py-1 bg-green-800 text-black rounded-lg text-xs font-bold capitalize">
+                            {tool}
+                        </span>
+                    {/each}
+                {/if}
+                {#if currentClass.toolChoices > 0 }
+                    <p class="text-sm text-gray-300">
+                        You will choose <span class="font-bold text-sky-400">{currentClass.toolChoices}</span> tools proficiencies between these:
+                    </p>
+                    <div class="mt-2 flex gap-2 flex-wrap">
+                        {#each currentClass.toolsProficiencyList as tools}
+                                                <span class="px-2 py-1 bg-gray-700 text-gray-200 rounded text-xs">
+                                                    {tools}
+                                                </span>
+                        {/each}
+                    </div>
+                {/if}
             </div>
         {/if}
     </div>

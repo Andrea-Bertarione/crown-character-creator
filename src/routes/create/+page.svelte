@@ -45,7 +45,7 @@
     let tempChoices: {[key: string]: string } & {Race: CharacterRace} = $state({
         Race: "Default",
         Subrace: "",
-        AdditionalChangesRaceSub: "",
+        AdditionalChanges: "",
         Class: ""
     });
 
@@ -133,9 +133,17 @@
             });
         }
 
+        stepsArray.push({
+            name: "Class",
+            header: "Select a Class",
+            subheader: "Choose a class for your character. Each class determines your abilities, proficiencies, and combat style.",
+            side: Object.keys(classesData),
+            confirm: "Select a Class"
+        });
+
         //additional choices
         const additionalChoicesRes: Step = {
-            name: "AdditionalChangesRaceSub",
+            name: "AdditionalChanges",
             header: "Select additional choices and features",
             subheader: "Select additional choices and features for your character.",
             side: [],
@@ -181,14 +189,6 @@
         if (additionalChoicesRes.side.length > 0) {
             stepsArray.push(additionalChoicesRes);
         }
-
-        stepsArray.push({
-            name: "Class",
-            header: "Select a Class",
-            subheader: "Choose a class for your character. Each class determines your abilities, proficiencies, and combat style.",
-            side: Object.keys(classesData),
-            confirm: "Select a Class"
-        });
 
         return stepsArray;
     });
@@ -383,7 +383,7 @@
                     >
                         <div class="flex items-center justify-between">
                             <span class="font-medium capitalize">{sideData.replaceAll("-", " ")}</span>
-                            {#if stepInfo.name === "AdditionalChangesRaceSub"}
+                            {#if stepInfo.name === "AdditionalChanges"}
                                 <Badge color="blue" class="px-2 py-0 text-xs">
                                     {sideData === "proficiency" ?
                                         proficienciesTabRaceState.reduce((sum, tab) => sum + getSelectedCountByTab(tab), 0):
@@ -409,7 +409,7 @@
                 {@const race = raceList.find(race => race.name === tempChoices["Race"])}
                 <SubraceDetails currentSubrace={!race || !race.subraces ? undefined : race.subraces[selectedSide] } />
             {/if}
-            {#if stepInfo && stepInfo.name === "AdditionalChangesRaceSub"}
+            {#if stepInfo && stepInfo.name === "AdditionalChanges"}
                 {#if stepInfo.side[selectedSide] === "Languages"}
                     <LanguagesComp knownLanguages={getKnownLanguages(tempChoices["Race"], tempChoices["Subrace"] || "")}
                                    bind:languageChoices={additionalChoicesRaceSubState["Languages"]}
@@ -436,8 +436,8 @@
                 {/if}
                 {#if stepInfo.side[selectedSide] === "feat"}
                     <FeatComp
+                            character={characterCreationState}
                             bind:selectedFeats={additionalChoicesRaceSubState["Feat"]}
-                            availableFeats={Object.values(featsData)}
                             maxFeats={getMaxCount("feat", tempChoices["Race"], tempChoices["Subrace"])}
                             featDescription={featsData}
                     />

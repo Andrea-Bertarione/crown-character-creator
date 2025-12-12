@@ -1,5 +1,6 @@
 <script lang="ts">
-    import {Label, Badge} from "flowbite-svelte";
+    import {Label, Badge, Dropdown, DropdownItem, Button} from "flowbite-svelte";
+    import { ChevronDownOutline } from "flowbite-svelte-icons";
     import type {FeatureData, ActionResource} from "../../data/features.data.ts";
 
     let {feature}: {feature: FeatureData} = $props();
@@ -179,6 +180,23 @@
                         <li class="text-violet-600 dark:text-violet-400">
                             ✨ <span class="capitalize">{modifier.value}</span>
                         </li>
+                    {/if}
+
+                    {#if modifier.type === 'fighting-style'}
+                        <li class="text-blue-600 dark:text-blue-400">
+                            🗡️ Skill: <span class="capitalize">{modifier.value === "choice" || typeof modifier.value !== "string" ? "A fighting style of your choice" : modifier.value.replace('-', ' ')}</span>
+                        </li>
+                    {/if}
+
+                    {#if modifier.type === 'resource'}
+                        <Button class="mt-4" color="sky">Resource scaling <ChevronDownOutline class="ms-2 h-6 w-6 text-white dark:text-white" /></Button>
+                        <Dropdown simple>
+                            {#each modifier.value as resource}
+                                <DropdownItem>
+                                    <span class="text-white">At level {resource.level} the pool consists of <span class="text-sky-400">{resource.die}</span> equal to your {resource.amount} modifier</span>
+                                </DropdownItem>
+                            {/each}
+                        </Dropdown>
                     {/if}
                 {/each}
             </ul>

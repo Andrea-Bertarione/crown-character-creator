@@ -1,7 +1,7 @@
-export type FeatureType = 'passive' | 'active' | 'resistance' | 'proficiency' | 'cantrip' | 'spell' | 'ability-boost';
+export type FeatureType = 'passive' | 'active' | 'resistance' | 'proficiency' | 'cantrip' | 'spell' | 'ability-boost' | 'resource';
 export type DamageType = 'fire' | 'cold' | 'lightning' | 'poison' | 'acid' | 'radiant' | 'necrotic' | 'psychic' | 'force' | 'bludgeoning' | 'piercing' | 'slashing' | 'thunder';
 export type SkillType = 'acrobatics' | 'animal-handling' | 'arcana' | 'athletics' | 'deception' | 'history' | 'insight' | 'intimidation' | 'investigation' | 'medicine' | 'nature' | 'perception' | 'performance' | 'persuasion' | 'religion' | 'sleight-of-hand' | 'stealth' | 'survival';
-export type ModifierType = 'action' | 'feat' | 'cantrip' | 'resistance' | 'immunity' | 'skill-proficiency' | 'weapon-proficiency' | 'armor-proficiency' | 'tool-proficiency' | 'speed' | 'darkvision' | 'damage-bonus' | 'ac-bonus' | 'saving-throw' | 'hit-points' | 'expertise' | 'resource' | 'extra-attack' | 'spell-list' | 'ability-boost';
+export type ModifierType = 'action' | 'fighting-style' | 'feat' | 'cantrip' | 'resistance' | 'immunity' | 'skill-proficiency' | 'weapon-proficiency' | 'armor-proficiency' | 'tool-proficiency' | 'speed' | 'darkvision' | 'damage-bonus' | 'ac-bonus' | 'saving-throw' | 'hit-points' | 'expertise' | 'resource' | 'extra-attack' | 'spell-list' | 'ability-boost';
 export type ResourceType = 'action' | 'bonus-action' | 'reaction' | 'movement' | 'spell-slot' | 'ki-point' | 'superiority-die' | 'bardic-inspiration' | 'sorcerous-point';
 
 export interface ActionResource {
@@ -669,8 +669,8 @@ export const featuresMap: {[key: string]: FeatureData} = {
                     damageDice: '3d6',
                     area: '3 meters',
                     origin: 'self',
-                    save: 'cha',
-                    cd: '8 + proficiency + cha',
+                    save: 'charisma',
+                    cd: '8 + proficiency + charisma',
                     resources: [
                         { type: 'action', cost: 1 }
                     ]
@@ -836,6 +836,13 @@ export const featuresMap: {[key: string]: FeatureData} = {
         description: 'You know one additional cantrip of your choice from the wizard spell list.',
         icon: "✨",
         type: 'cantrip'
+    },
+
+    ["Spellcasting"]: {
+        name: "Spellcasting",
+        description: "You are able to cast spell, manipulate the weave in one way or another...",
+        icon: "✨",
+        type: "passive"
     },
 
     // ==================== ARTIFICER FEATURES ====================
@@ -1016,13 +1023,27 @@ export const featuresMap: {[key: string]: FeatureData} = {
     },
 
     // ==================== BARD FEATURES ====================
+    ["Bardic Inspiration die"]: {
+        name: 'Bardic Inspiration die',
+        description: 'Your Bardic Inspiration die pool that is equal to your Charisma modifier(minimum 1). The die becomes a d8 at 5th level, a d10 at 10th level, and a d12 at 15th level.',
+        icon: "🎵",
+        frequency: "per-long-rest",
+        type: 'passive',
+        modifiers: [
+            {type: "resource", value: [
+                {level: 1, die: "d6", amount: "charisma"},
+                {level: 5, die: "d8", amount: "charisma"},
+                {level: 10, die: "d10", amount: "charisma"},
+                {level: 15, die: "d12", amount: "charisma"}
+            ]},
+        ]
+    },
 
     ["Bardic Inspiration"]: {
         name: 'Bardic Inspiration',
         description: 'You can inspire others through stirring words or music. Other creatures that can hear you within 18 meters gain a Bardic Inspiration die.',
         icon: "🎵",
         type: 'active',
-        frequency: 'per-long-rest',
         resources: [
             { type: 'bardic-inspiration', cost: 1, description: 'Grant d6' }
         ]
@@ -1328,13 +1349,13 @@ export const featuresMap: {[key: string]: FeatureData} = {
 
     // ==================== FIGHTER FEATURES ====================
 
-    ["Fighting Style"]: {
+    ["Fighting Style(Fighter)"]: {
         name: 'Fighting Style',
-        description: 'You adopt a particular style of fighting as your specialty. You choose one of the following options.',
+        description: 'You adopt a particular style of fighting as your specialty. You choose one between a list of styles.',
         icon: "🗡️",
         type: 'passive',
         modifiers: [
-            { type: 'damage-bonus', value: '+2', description: 'Weapon style bonus' }
+            { type: 'fighting-style', value: 'choice' }
         ]
     },
     ["Second Wind"]: {
@@ -2021,11 +2042,11 @@ export function getClassFeatures(className: string): FeatureData[] {
     const classFeatureMap: {[key: string]: string[]} = {
         'Artificer': ['Magical Tinkering', 'Infuse Item', 'Tool Expertise', 'Eldritch Cannon', 'Steel Defender', 'Arcane Armor', 'Potion Brewing'],
         'Barbarian': ['Rage', 'Unarmored Defense', 'Reckless Attack', 'Danger Sense', 'Extra Attack', 'Brutal Critical', 'Relentless Rage', 'Frenzy', 'Mindless Rage', 'Totem Spirit', 'Aspect of the Beast'],
-        'Bard': ['Bardic Inspiration', 'Jack of All Trades', 'Song of Rest', 'Expertise', 'Font of Inspiration', 'Countercharm', 'Mantle of Inspiration', 'Enthralling Performance', 'Cutting Words', 'Magical Secrets'],
+        'Bard': ['Bardic Inspiration die', 'Bardic Inspiration', 'Jack of All Trades', 'Song of Rest', 'Expertise', 'Font of Inspiration', 'Countercharm', 'Mantle of Inspiration', 'Enthralling Performance', 'Cutting Words', 'Magical Secrets'],
         'Blood Hunter': ['Monster Hunter', 'Blood Curse', 'Crimson Rite', 'Blood Maledict', 'Rite Specialization', 'Dark Patron', 'Eldritch Invocations'],
         'Cleric': ['Divine Sense', 'Lay on Hands', 'Channel Divinity', 'Preserve Life', 'Blessed Healer', 'Divine Strike', 'Wrath of the Storm'],
         'Druid': ['Druidic', 'Wild Shape', 'Bonus Cantrip', 'Natural Recovery', 'Wild Shape Improvement', 'Timeless Body', 'Beast Spells', 'Circle of the Land', 'Circle Spells'],
-        'Fighter': ['Fighting Style', 'Second Wind', 'Improved Critical', 'Remarkable Athlete', 'Indomitable', 'Extra Attacks', 'Combat Superiority', 'Know Your Enemy', 'Spellcasting (Eldritch Knight)'],
+        'Fighter': ['Fighting Style(Fighter)', 'Second Wind', 'Improved Critical', 'Remarkable Athlete', 'Indomitable', 'Extra Attacks', 'Combat Superiority', 'Know Your Enemy', 'Spellcasting (Eldritch Knight)'],
         'Monk': ['Martial Arts', 'Unarmored Defense (Monk)', 'Ki Points', 'Unarmored Movement', 'Monastic Tradition', 'Open Hand Technique', 'Wholeness of Body', 'Stunning Strike', 'Shadow Arts'],
         'Paladin': ['Divine Sense (Paladin)', 'Lay on Hands (Paladin)', 'Divine Smite', 'Divine Health', 'Sacred Weapon', 'Channel Divinity (Paladin)', 'Extra Attack (Paladin)', 'Improved Divine Smite', 'Cleansing Touch'],
         'Ranger': ['Favored Enemy', 'Natural Explorer', 'Fighting Style (Ranger)', 'Spellcasting (Ranger)', 'Ranger\'s Companion', 'Extra Attack (Ranger)', 'Colossus Slayer', 'Hunter\'s Sense'],

@@ -607,6 +607,8 @@ export const proficienciesList: CharacterProficiencies = {
         state: "none",
     },
 };
+
+// ===== SKILL PROFICIENCIES =====
 /**
  * All available D&D 5e skill proficiencies
  */
@@ -631,24 +633,63 @@ export const skillProficiencies = [
     "Survival"
 ] as const;
 
-export const toolsProficiencies = [
-    "Alchemist's supplies",
-    "Brewer's supplies",
-    "Cartographer's tools",
-    "Cook's utensils",
-    "Glassblower's supplies",
-    "Jeweler's tools",
-    "Mason's tools",
-    "Painter's supplies",
-    "Poisoner's kit",
-    "Ranger's tools",
-    "Smith's tools",
-    "Thieves' tools",
-    "Vintner's tools"
-]
-
 export type SkillProficiency = typeof skillProficiencies[number];
-export type ToolsProficiency = typeof toolsProficiencies[number];
+
+// ===== TOOL PROFICIENCIES WITH CATEGORIES =====
+export const toolsProficiencies = {
+    "Artisan's Tools": [
+        "Alchemist's Supplies",
+        "Brewer's Supplies",
+        "Calligrapher's Supplies",
+        "Carpenter's Tools",
+        "Cartographer's Tools",
+        "Cobbler's Tools",
+        "Cook's Utensils",
+        "Glassblower's Tools",
+        "Jeweler's Tools",
+        "Leatherworker's Tools",
+        "Mason's Tools",
+        "Painter's Supplies",
+        "Potter's Tools",
+        "Smith's Tools",
+        "Tinker's Tools",
+        "Weaver's Tools",
+        "Woodcarver's Tools"
+    ] as const,
+    "Musical Instruments": [
+        "Bagpipes",
+        "Drum",
+        "Dulcimer",
+        "Flute",
+        "Lute",
+        "Lyre",
+        "Horn",
+        "Pan Flute",
+        "Shawm",
+        "Viol"
+    ] as const,
+    "Gaming Sets": [
+        "Dice Set",
+        "Dragonchess Set",
+        "Playing Card Set",
+        "Three-Dragon Ante Set"
+    ] as const,
+    "Miscellaneous Tools": [
+        "Disguise Kit",
+        "Forgery Kit",
+        "Herbalism Kit",
+        "Navigator's Tools",
+        "Poisoner's Kit",
+        "Thieves' Tools",
+        "Vehicles (Land)",
+        "Vehicles (Water)"
+    ] as const,
+} as const;
+
+export type ToolCategory = keyof typeof toolsProficiencies;
+export type ToolName = typeof toolsProficiencies[ToolCategory][number];
+
+// ===== UTILITY FUNCTIONS =====
 
 /**
  * Get all available skill proficiencies
@@ -659,18 +700,131 @@ export function getAvailableSkillProficiencies(): SkillProficiency[] {
 }
 
 /**
- * Get all available skill proficiencies
- * @returns Array of all skill proficiency names
+ * Get all available tool proficiencies
+ * @returns Array of all tool names
  */
-export function getAvailableToolsProficiencies(): ToolsProficiency[] {
-    return [...toolsProficiencies];
+export function getAvailableToolsProficiencies(): ToolName[] {
+    return Object.values(toolsProficiencies).flat() as ToolName[];
 }
 
 /**
- * Check if a skill is a valid proficiency
+ * Get tool proficiencies by category
+ * @param category - The tool category
+ * @returns Array of tool names in the category
+ */
+export function getToolsByCategory(category: ToolCategory): readonly ToolName[] {
+    return toolsProficiencies[category];
+}
+
+/**
+ * Get the category of a tool
+ * @param toolName - The tool name
+ * @returns The category of the tool, or null if not found
+ */
+export function getToolCategory(toolName: string): ToolCategory | null {
+    for (const [category, tools] of Object.entries(toolsProficiencies)) {
+        if ((tools as readonly string[]).includes(toolName)) {
+            return category as ToolCategory;
+        }
+    }
+    return null;
+}
+
+/**
+ * Check if a skill is a valid skill proficiency
  * @param skill - The skill name to check
  * @returns Boolean indicating if the skill is valid
  */
 export function isValidSkillProficiency(skill: string): skill is SkillProficiency {
     return skillProficiencies.includes(skill as SkillProficiency);
+}
+
+/**
+ * Check if a tool is a valid tool proficiency
+ * @param tool - The tool name to check
+ * @returns Boolean indicating if the tool is valid
+ */
+export function isValidToolProficiency(tool: string): tool is ToolName {
+    return getAvailableToolsProficiencies().includes(tool as ToolName);
+}
+
+/**
+ * Get all tool categories
+ * @returns Array of all tool category names
+ */
+export function getAllToolCategories(): ToolCategory[] {
+    return Object.keys(toolsProficiencies) as ToolCategory[];
+}
+
+/**
+ * Format tool proficiencies grouped by category
+ * @param tools - Array of tool names
+ * @returns Object with categories as keys and arrays of tools as values
+ */
+export function formatToolsByCategory(tools: string[]): Record<ToolCategory, ToolName[]> {
+    const result: Record<ToolCategory, ToolName[]> = {
+        "Artisan's Tools": [],
+        "Musical Instruments": [],
+        "Gaming Sets": [],
+        "Miscellaneous Tools": []
+    };
+
+    tools.forEach(tool => {
+        const category = getToolCategory(tool);
+        if (category && isValidToolProficiency(tool)) {
+            result[category].push(tool as ToolName);
+        }
+    });
+
+    return result;
+}
+
+/**
+ * Get all tools of multiple categories
+ * @param categories - Array of tool categories
+ * @returns Array of all tools in the specified categories
+ */
+export function getToolsFromCategories(categories: ToolCategory[]): ToolName[] {
+    return categories.flatMap(category => toolsProficiencies[category] as unknown as ToolName[]);
+}
+
+/**
+ * Check if proficiency is a tool proficiency
+ * @param key - The proficiency key from proficienciesList
+ * @returns Boolean indicating if the proficiency is a tool
+ */
+export function isToolProficiency(key: string): boolean {
+    const prof = proficienciesList[key];
+    return prof && prof.type === "tool";
+}
+
+/**
+ * Get all active tool proficiencies from a character
+ * @param profs - Character proficiencies object
+ * @returns Array of active tool proficiency names
+ */
+export function getActiveToolProficiencies(profs: CharacterProficiencies): ToolName[] {
+    return Object.entries(profs)
+        .filter(([_, prof]) => prof.type === "tool" && prof.state !== "none")
+        .map(([_, prof]) => prof.name as ToolName);
+}
+
+/**
+ * Check if a character has a specific tool proficiency
+ * @param profs - Character proficiencies object
+ * @param toolName - The tool name to check
+ * @returns Boolean indicating if the character has the proficiency
+ */
+export function hasToolProficiency(profs: CharacterProficiencies, toolName: ToolName): boolean {
+    const prof = Object.values(profs).find(p => p.name === toolName && p.type === "tool");
+    return prof ? prof.state !== "none" : false;
+}
+
+/**
+ * Get all tools in a category
+ * @param category - The tool category
+ * @returns Array of tool names in the category
+ */
+export function getToolsInCategory(category: ToolCategory): ToolName[] {
+    return [...toolsProficiencies[category]] as ToolName[];
 }
